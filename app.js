@@ -562,56 +562,51 @@ function renderMotiesVisuals() {
   }
 
   // ── DIVERGENDE BALK ───────────────────────────────────────────────────────
-  function divergingSVG() {
-    if (!nauwste.length) return '<div class="viz-empty">Geen stemmingsdata — voor_pct ontbreekt in moties.json</div>';
-    const rowH = 38, PAD = { l:196, r:88, t:20, b:8 };
-    const W = 720;
-    const H = nauwste.length * rowH + PAD.t + PAD.b;
-    const barAreaW = W - PAD.l - PAD.r;
-    const midX = PAD.l + barAreaW / 2;
+  function divergingHTML() {
+  if (!nauwste.length) return '<div class="viz-empty">Geen stemmingsdata — voor_pct ontbreekt in moties.json</div>';
 
-    // Scale: 0–100% maps to 0–barAreaW (center = 50% = midX)
-    // tegen bar: extends LEFT  from midX by (tp/100)*barAreaW/2... 
-    // No: full scale. 50% vote → bar reaches midX. 100% → bar fills full side.
-    // Both bars anchored at center, each scaled 0-100% → 0 to (barAreaW/2)
-    // This means 50/50 → each bar = barAreaW/2, meeting at center. ✓
-    const halfBar = barAreaW / 2;
+  const rows = nauwste.map(m => {
+    const tp = m.tegen_pct || 0;
+    const vp = m.voor_pct  || 0;
+    const isAan  = m.status === 'aangenomen';
+    const sKleur = isAan ? 'var(--go)' : 'var(--stop)';
+    const sLabel = isAan ? '✓ Aangenomen' : '✗ Verworpen';
+    const titel  = m.titel.replace(/^[A-Z0-9]+(?:\s+\([^)]+\))?\s+/i, '');
+    return `
+      <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--rule);">
+        <div style="width:200px;flex-shrink:0;">
+          <div style="font-size:11px;font-weight:600;line-height:1.35;color:var(--text);">${esc(titel)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${fmtDate(m.datum,'short')} · marge ${m.marge}%</div>
+        </div>
+        <div style="flex:1;display:flex;align-items:center;height:22px;">
+          <div style="flex:1;display:flex;justify-content:flex-end;height:100%;">
+            <div style="width:${tp}%;height:100%;background:var(--stop);opacity:0.78;border-radius:2px 0 0 2px;display:flex;align-items:center;justify-content:flex-end;padding-right:3px;">
+              ${tp > 18 ? `<span style="font-size:9px;color:white;font-weight:700;">${tp}%</span>` : ''}
+            </div>
+          </div>
+          <div style="width:2px;height:26px;background:var(--ink2);flex-shrink:0;"></div>
+          <div style="flex:1;height:100%;">
+            <div style="width:${vp}%;height:100%;background:var(--go);opacity:0.82;border-radius:0 2px 2px 0;display:flex;align-items:center;padding-left:3px;">
+              ${vp > 18 ? `<span style="font-size:9px;color:white;font-weight:700;">${vp}%</span>` : ''}
+            </div>
+          </div>
+        </div>
+        <div style="width:96px;flex-shrink:0;font-size:11px;font-weight:700;color:${sKleur};">${sLabel}</div>
+      </div>`;
+  }).join('');
 
-    const header = `
-      <text x="${PAD.l + halfBar/2}" y="13" text-anchor="middle" font-size="9" fill="var(--stop)" font-weight="700">← TEGEN</text>
-      <text x="${PAD.l + halfBar + halfBar/2}" y="13" text-anchor="middle" font-size="9" fill="var(--go)" font-weight="700">VOOR →</text>`;
-
-    const rows = nauwste.map((m, i) => {
-      const y    = PAD.t + i * rowH;
-      const tp   = m.tegen_pct || 0;
-      const vp   = m.voor_pct  || 0;
-      const tW   = Math.round((tp / 100) * halfBar);
-      const vW   = Math.round((vp / 100) * halfBar);
-      const rowBg = i % 2 === 0 ? 'var(--paper)' : 'transparent';
-      const isAan = m.status === 'aangenomen';
-      const sKleur = isAan ? 'var(--go)' : 'var(--stop)';
-      const sLabel = isAan ? '✓ Aangenomen' : '✗ Verworpen';
-      // Strip motion ID from title
-      const titelKort = m.titel.replace(/^[A-Z0-9]+(?:\s+\([^)]+\))?\s+/i, '').slice(0, 34);
-
-      return `
-        <rect x="0" y="${y}" width="${W}" height="${rowH}" fill="${rowBg}"/>
-        <line x1="${midX}" y1="${y+4}" x2="${midX}" y2="${y+rowH-4}" stroke="var(--ink2)" stroke-width="1.5"/>
-        <text x="${PAD.l-8}" y="${y+rowH/2-3}" text-anchor="end" font-size="10" fill="var(--text)" font-weight="500">${esc(titelKort)}${m.titel.replace(/^[A-Z0-9]+(?:\s+\([^)]+\))?\s+/i,'').length > 34 ? '…' : ''}</text>
-        <text x="${PAD.l-8}" y="${y+rowH/2+10}" text-anchor="end" font-size="9" fill="var(--muted)">${fmtDate(m.datum,'short')} · marge ${m.marge}%</text>
-        <rect x="${midX-tW}" y="${y+9}" width="${tW}" height="${rowH-18}" fill="var(--stop)" opacity="0.75" rx="1">
-          <title>Tegen: ${tp}%</title></rect>
-        <rect x="${midX}" y="${y+9}" width="${vW}" height="${rowH-18}" fill="var(--go)" opacity="0.8" rx="1">
-          <title>Voor: ${vp}%</title></rect>
-        ${tW > 22 ? `<text x="${midX-tW/2}" y="${y+rowH/2+4}" text-anchor="middle" font-size="9" fill="white" font-weight="700">${tp}%</text>` : ''}
-        ${vW > 22 ? `<text x="${midX+vW/2}" y="${y+rowH/2+4}" text-anchor="middle" font-size="9" fill="white" font-weight="700">${vp}%</text>` : ''}
-        <text x="${W-PAD.r+6}" y="${y+rowH/2+4}" text-anchor="start" font-size="10" fill="${sKleur}" font-weight="700">${sLabel}</text>`;
-    }).join('');
-
-    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:${H}px;">
-      ${header}${rows}
-    </svg>`;
-  }
+  return `<div style="padding:0 20px 12px;">
+    <div style="display:flex;gap:12px;padding-bottom:8px;border-bottom:2px solid var(--rule);margin-bottom:2px;">
+      <div style="width:200px;flex-shrink:0;"></div>
+      <div style="flex:1;display:flex;">
+        <div style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--stop);letter-spacing:.5px;">← TEGEN</div>
+        <div style="flex:1;text-align:center;font-size:10px;font-weight:700;color:var(--go);letter-spacing:.5px;">VOOR →</div>
+      </div>
+      <div style="width:96px;flex-shrink:0;"></div>
+    </div>
+    ${rows}
+  </div>`;
+}
 
   // ── HTML ──────────────────────────────────────────────────────────────────
   const maxInd = topIndieners[0]?.totaal || 1;
