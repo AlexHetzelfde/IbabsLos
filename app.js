@@ -354,135 +354,354 @@ function stemmingBar(m) {
 function renderMotiesVisuals() {
   const el = document.getElementById('motiesViz');
   if (!el || !moties.length) return;
+
   const maandNamen = ['Jan','Feb','Mrt','Apr','Mei','Jun','Jul','Aug','Sep','Okt','Nov','Dec'];
+  const PARTIJ_KORT = {
+    'GROENLINKS – PvdA': 'GL-PvdA', 'Groenlinks/PvdA': 'GL-PvdA',
+    'Democratisch Zaanstad': 'DZ', 'Forum voor Democratie': 'FvD',
+    'Forum voor democratie': 'FvD', 'Partij voor de Dieren': 'PvdD',
+    'ChristenUnie': 'CU', 'Lokaal Zaans': 'LZ', 'Groep de Boer': 'GdB',
+  };
+  const kort = naam => PARTIJ_KORT[naam] || naam;
+
+  // ── DATA ─────────────────────────────────────────────────────────────────
   const partijStats = {};
   moties.forEach(m => {
     if (!m.partij) return;
-    if (!partijStats[m.partij]) partijStats[m.partij] = { totaal:0, aangenomen:0, verworpen:0, ingetrokken:0, aangehouden:0, moties_count:0, amendementen_count:0 };
+    if (!partijStats[m.partij]) partijStats[m.partij] = { totaal:0, aangenomen:0, verworpen:0, ingetrokken:0, aangehouden:0 };
     const s = partijStats[m.partij];
     s.totaal++;
     if (m.status === 'aangenomen')  s.aangenomen++;
     if (m.status === 'verworpen')   s.verworpen++;
     if (m.status === 'ingetrokken') s.ingetrokken++;
     if (m.status === 'aangehouden') s.aangehouden++;
-    if ((m.type||'').toLowerCase().includes('motie'))      s.moties_count++;
-    if ((m.type||'').toLowerCase().includes('amendement')) s.amendementen_count++;
   });
-  const partijLijst = Object.entries(partijStats).filter(([,s]) => s.totaal >= 1).map(([naam, s]) => {
-    const metStatus = s.aangenomen + s.verworpen;
-    const pct = metStatus ? Math.round(s.aangenomen / metStatus * 100) : null;
-    return { naam, ...s, pct };
-  }).sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1));
+  const partijLijst = Object.entries(partijStats).map(([naam, s]) => {
+    const ms = s.aangenomen + s.verworpen;
+    return { naam, ...s, pct: ms > 0 ? Math.round(s.aangenomen / ms * 100) : null };
+  });
+
   const indienerStats = {};
   moties.forEach(m => {
     if (!m.indiener) return;
-    if (!indienerStats[m.indiener]) indienerStats[m.indiener] = { totaal: 0, partij: m.partij };
+    if (!indienerStats[m.indiener]) indienerStats[m.indiener] = { totaal:0, aangenomen:0, verworpen:0, partij: m.partij };
     indienerStats[m.indiener].totaal++;
+    if (m.status === 'aangenomen') indienerStats[m.indiener].aangenomen++;
+    if (m.status === 'verworpen')  indienerStats[m.indiener].verworpen++;
   });
-  const topIndieners = Object.entries(indienerStats).sort((a, b) => b[1].totaal - a[1].totaal).slice(0, 6);
-  const controversieel = moties.filter(m => m.voor_pct != null && m.tegen_pct != null).map(m => ({ ...m, marge: Math.abs(m.voor_pct - m.tegen_pct) })).sort((a, b) => a.marge - b.marge).slice(0, 8);
+  const topIndieners = Object.entries(indienerStats)
+    .sort((a, b) => b[1].totaal - a[1].totaal).slice(0, 8)
+    .map(([naam, s]) => {
+      const ms = s.aangenomen + s.verworpen;
+      return { naam, ...s, pct: ms > 0 ? Math.round(s.aangenomen / ms * 100) : null };
+    });
+
+  const nauwste = moties
+    .filter(m => m.voor_pct != null && m.tegen_pct != null &&
+                 (m.status === 'aangenomen' || m.status === 'verworpen'))
+    .map(m => ({ ...m, marge: Math.abs(m.voor_pct - m.tegen_pct) }))
+    .sort((a, b) => a.marge - b.marge)
+    .slice(0, 8);
+
   const maandTrend = {};
   moties.forEach(m => {
     if (!m.datum) return;
-    const maand = m.datum.slice(0, 7);
-    if (!maandTrend[maand]) maandTrend[maand] = { totaal: 0, aangenomen: 0, verworpen: 0 };
-    maandTrend[maand].totaal++;
-    if (m.status === 'aangenomen') maandTrend[maand].aangenomen++;
-    if (m.status === 'verworpen')  maandTrend[maand].verworpen++;
+    const k = m.datum.slice(0, 7);
+    if (!maandTrend[k]) maandTrend[k] = { totaal:0, aangenomen:0, verworpen:0 };
+    maandTrend[k].totaal++;
+    if (m.status === 'aangenomen') maandTrend[k].aangenomen++;
+    if (m.status === 'verworpen')  maandTrend[k].verworpen++;
   });
   const maandLijst = Object.entries(maandTrend).sort((a, b) => a[0].localeCompare(b[0]));
-  const partijVerlies = [...partijLijst].filter(p => (p.verworpen + p.ingetrokken) > 0).sort((a, b) => b.totaal - a.totaal).slice(0, 8);
-  const partijType = [...partijLijst].filter(p => p.moties_count + p.amendementen_count > 0).sort((a, b) => b.totaal - a.totaal).slice(0, 8);
+
   const coSign = {};
   moties.forEach(m => {
     const fracties = (m.fracties || []).filter(Boolean);
     if (fracties.length < 2) return;
-    for (let i = 0; i < fracties.length; i++) for (let j = i+1; j < fracties.length; j++) {
-      const key = [fracties[i], fracties[j]].sort().join(' + ');
-      coSign[key] = (coSign[key] || 0) + 1;
-    }
+    for (let i = 0; i < fracties.length; i++)
+      for (let j = i + 1; j < fracties.length; j++) {
+        const key = [fracties[i], fracties[j]].sort().join('||');
+        coSign[key] = (coSign[key] || 0) + 1;
+      }
   });
   const topCoSign = Object.entries(coSign).sort((a, b) => b[1] - a[1]).slice(0, 8);
-  const totaal = moties.length;
-  const aangenomen = moties.filter(m => m.status === 'aangenomen').length;
-  const metStatus = moties.filter(m => m.status === 'aangenomen' || m.status === 'verworpen').length;
-  const pctGlobaal = metStatus ? Math.round(aangenomen / metStatus * 100) : 0;
-  const meestActief = partijLijst.length ? partijLijst.reduce((a, b) => b.totaal > a.totaal ? b : a, partijLijst[0]) : null;
-  const maxTotaal = Math.max(...partijLijst.map(p => p.totaal), 1);
 
-  function trendSVG() {
-    if (maandLijst.length < 2) return '<div class="viz-empty">Onvoldoende data</div>';
-    const W = 700, H = 150, PAD = { t: 10, r: 16, b: 28, l: 36 };
+  const totaal      = moties.length;
+  const aangenomen  = moties.filter(m => m.status === 'aangenomen').length;
+  const metStatus   = moties.filter(m => m.status === 'aangenomen' || m.status === 'verworpen').length;
+  const pctGlobaal  = metStatus ? Math.round(aangenomen / metStatus * 100) : 0;
+  const meestActief = partijLijst.reduce((a, b) => b.totaal > a.totaal ? b : a, partijLijst[0] || { naam:'—', totaal:0 });
+
+  // ── SCATTER SVG ──────────────────────────────────────────────────────────
+  function scatterSVG() {
+    const scatter = partijLijst.filter(p => p.pct !== null && p.totaal >= 2);
+    if (scatter.length < 3) return '<div class="viz-empty">Onvoldoende data</div>';
+
+    const W = 680, H = 320;
+    const PAD = { t:28, r:24, b:44, l:40 };
     const pW = W - PAD.l - PAD.r, pH = H - PAD.t - PAD.b;
-    const maxC = Math.max(...maandLijst.map(([, d]) => d.totaal), 1);
-    const slot  = pW / maandLijst.length;
-    const barW  = Math.max(6, Math.floor(slot * 0.6));
-    const bars = maandLijst.map(([maand, d], i) => {
-      const x = PAD.l + i * slot + (slot - barW) / 2;
-      const hTot = (d.totaal / maxC) * pH, hAng = (d.aangenomen / maxC) * pH, hVer = (d.verworpen / maxC) * pH;
-      const mn = parseInt(maand.split('-')[1]), yr = maand.split('-')[0].slice(2);
-      return `<rect x="${x}" y="${PAD.t + pH - hTot}" width="${barW}" height="${hTot}" fill="#E6F3F5" rx="1"/>
-              <rect x="${x}" y="${PAD.t + pH - hAng}" width="${barW * 0.5}" height="${hAng}" fill="var(--go)" rx="1"/>
-              <rect x="${x + barW * 0.5}" y="${PAD.t + pH - hVer}" width="${barW * 0.5}" height="${hVer}" fill="var(--stop)" rx="1" opacity="0.75"/>
-              <text x="${x + barW / 2}" y="${H - 4}" text-anchor="middle" font-size="9" fill="#6B7280">${maandNamen[mn-1]}'${yr}</text>`;
+    const maxX = Math.max(...scatter.map(p => p.totaal)) * 1.12;
+    const maxTot = Math.max(...scatter.map(p => p.totaal));
+    const midX = PAD.l + pW / 2;
+    const midY = PAD.t + pH / 2;
+    const maxR = 17, minR = 5;
+
+    const qBg = `
+      <rect x="${PAD.l}" y="${PAD.t}" width="${pW/2}" height="${pH/2}" fill="#E6F4EC" opacity="0.25"/>
+      <rect x="${midX}" y="${PAD.t}" width="${pW/2}" height="${pH/2}" fill="#E6F4EC" opacity="0.42"/>
+      <rect x="${PAD.l}" y="${midY}" width="${pW/2}" height="${pH/2}" fill="#FAE9E9" opacity="0.15"/>
+      <rect x="${midX}" y="${midY}" width="${pW/2}" height="${pH/2}" fill="#FAE9E9" opacity="0.25"/>
+      <line x1="${midX}" y1="${PAD.t}" x2="${midX}" y2="${PAD.t+pH}" stroke="var(--rule)" stroke-width="1" stroke-dasharray="4,3"/>
+      <line x1="${PAD.l}" y1="${midY}" x2="${PAD.l+pW}" y2="${midY}" stroke="var(--rule)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="${PAD.l+6}" y="${PAD.t+13}" font-size="9" fill="var(--go)" font-weight="700" opacity="0.6">SELECTIEF · RAAK</text>
+      <text x="${midX+6}" y="${PAD.t+13}" font-size="9" fill="var(--go)" font-weight="700" opacity="0.85">ACTIEF · EFFECTIEF</text>
+      <text x="${PAD.l+6}" y="${PAD.t+pH-5}" font-size="9" fill="var(--stop)" font-weight="700" opacity="0.45">WEINIG · LAAG SUCCES</text>
+      <text x="${midX+6}" y="${PAD.t+pH-5}" font-size="9" fill="var(--stop)" font-weight="700" opacity="0.6">VEEL · LAAG SUCCES</text>`;
+
+    const yTicks = [0, 25, 50, 75, 100].map(v => {
+      const y = PAD.t + pH - (v / 100) * pH;
+      return `<line x1="${PAD.l}" y1="${y}" x2="${PAD.l+pW}" y2="${y}" stroke="var(--rule)" stroke-width="0.5"/>
+              <text x="${PAD.l-5}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)">${v}%</text>`;
     }).join('');
-    const yTicks = [0, Math.ceil(maxC / 2), maxC];
-    const yLines = yTicks.map(v => { const y = PAD.t + pH - (v / maxC) * pH; return `<line x1="${PAD.l}" y1="${y}" x2="${PAD.l + pW}" y2="${y}" stroke="#D8D5CE" stroke-width="0.5"/><text x="${PAD.l - 4}" y="${y + 3}" text-anchor="end" font-size="9" fill="#6B7280">${v}</text>`; }).join('');
-    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:${H}px;">${yLines}<line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${PAD.t+pH}" stroke="#D8D5CE" stroke-width="1"/><line x1="${PAD.l}" y1="${PAD.t+pH}" x2="${PAD.l+pW}" y2="${PAD.t+pH}" stroke="#D8D5CE" stroke-width="1"/>${bars}</svg>`;
+
+    const xStep = Math.ceil(maxX / 5 / 5) * 5;
+    const xTicks = Array.from({length: 7}, (_, i) => i * xStep)
+      .filter(v => v <= maxX)
+      .map(v => {
+        const x = PAD.l + (v / maxX) * pW;
+        return `<line x1="${x}" y1="${PAD.t+pH}" x2="${x}" y2="${PAD.t+pH+4}" stroke="var(--rule)" stroke-width="1"/>
+                <text x="${x}" y="${PAD.t+pH+14}" text-anchor="middle" font-size="9" fill="var(--muted)">${v}</text>`;
+      }).join('');
+
+    const axisLabels = `
+      <text x="${PAD.l+pW/2}" y="${H-2}" text-anchor="middle" font-size="10" fill="var(--muted)">Aantal ingediend →</text>
+      <text x="10" y="${PAD.t+pH/2}" text-anchor="middle" font-size="10" fill="var(--muted)" transform="rotate(-90,10,${PAD.t+pH/2})">Slagings% →</text>`;
+
+    // Large dots first so small ones render on top
+    const sorted = [...scatter].sort((a, b) => b.totaal - a.totaal);
+    const dots = sorted.map(p => {
+      const x = Math.round(PAD.l + (p.totaal / maxX) * pW);
+      const y = Math.round(PAD.t + pH - (p.pct / 100) * pH);
+      const r = Math.round(minR + (p.totaal / maxTot) * (maxR - minR));
+      const isC  = COALITIE_FRACTIES.has(p.naam);
+      const fill = isC ? '#006B7B' : '#0D1B2A';
+      const op   = isC ? 0.82 : 0.62;
+      const k    = kort(p.naam);
+      // Keep label inside canvas
+      const useLeft = x + r + 4 + k.length * 6.5 > W - 10;
+      const lx     = useLeft ? x - r - 4 : x + r + 4;
+      const anchor  = useLeft ? 'end' : 'start';
+      return `<g>
+        <circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" fill-opacity="${op}" stroke="${fill}" stroke-width="1.5" stroke-opacity="0.3">
+          <title>${p.naam}: ${p.totaal} ingediend — ${p.pct}% aangenomen (${p.aangenomen} van ${p.aangenomen+p.verworpen} met uitslag)</title>
+        </circle>
+        <text x="${lx}" y="${y+3}" text-anchor="${anchor}" font-size="10" fill="var(--text)" font-weight="600">${esc(k)}</text>
+        <text x="${lx}" y="${y+13}" text-anchor="${anchor}" font-size="9" fill="var(--muted)">${p.pct}%</text>
+      </g>`;
+    }).join('');
+
+    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:${H}px;">
+      ${qBg}
+      <line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${PAD.t+pH}" stroke="var(--rule)" stroke-width="1.5"/>
+      <line x1="${PAD.l}" y1="${PAD.t+pH}" x2="${PAD.l+pW}" y2="${PAD.t+pH}" stroke="var(--rule)" stroke-width="1.5"/>
+      ${yTicks}${xTicks}${axisLabels}${dots}
+    </svg>
+    <div style="display:flex;gap:16px;padding:4px 0 10px;font-size:11px;color:var(--muted);">
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#006B7B;border-radius:50%;display:inline-block;opacity:.82;"></span>Coalitie</span>
+      <span style="display:flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;background:#0D1B2A;border-radius:50%;display:inline-block;opacity:.62;"></span>Oppositie</span>
+      <span>· cirkelgrootte = aantal ingediend</span>
+    </div>`;
   }
 
+  // ── TREND SVG ─────────────────────────────────────────────────────────────
+  function trendSVG() {
+    if (maandLijst.length < 2) return '<div class="viz-empty">Onvoldoende data</div>';
+    const W = 700, H = 160;
+    const PAD = { t:12, r:16, b:28, l:36 };
+    const pW = W - PAD.l - PAD.r, pH = H - PAD.t - PAD.b;
+    const maxC = Math.max(...maandLijst.map(([,d]) => d.totaal), 1);
+    const slot = pW / maandLijst.length;
+    const barW = Math.max(8, Math.floor(slot * 0.65));
+
+    const bars = maandLijst.map(([maand, d], i) => {
+      const x   = PAD.l + i * slot + (slot - barW) / 2;
+      const mn  = parseInt(maand.split('-')[1]);
+      const yr  = maand.split('-')[0].slice(2);
+      const yBase = PAD.t + pH;
+      // Stacked from bottom: aangenomen (groen) → verworpen (rood) → rest (grijs)
+      const hAng  = Math.round((d.aangenomen / maxC) * pH);
+      const hVer  = Math.round((d.verworpen  / maxC) * pH);
+      const hRest = Math.round((d.totaal     / maxC) * pH) - hAng - hVer;
+      return `
+        <rect x="${x}" y="${yBase - hAng}" width="${barW}" height="${hAng}" fill="var(--go)" opacity="0.82" rx="1">
+          <title>${d.aangenomen} aangenomen</title></rect>
+        <rect x="${x}" y="${yBase - hAng - hVer}" width="${barW}" height="${hVer}" fill="var(--stop)" opacity="0.75">
+          <title>${d.verworpen} verworpen</title></rect>
+        <rect x="${x}" y="${yBase - hAng - hVer - hRest}" width="${barW}" height="${hRest}" fill="var(--rule)" opacity="0.9">
+          <title>${d.totaal - d.aangenomen - d.verworpen} aangehouden/ingetrokken</title></rect>
+        <text x="${x+barW/2}" y="${H-4}" text-anchor="middle" font-size="9" fill="var(--muted)">${maandNamen[mn-1]}'${yr}</text>`;
+    }).join('');
+
+    const yTicks = [0, Math.ceil(maxC/2), maxC].map(v => {
+      const y = PAD.t + pH - (v/maxC)*pH;
+      return `<line x1="${PAD.l}" y1="${y}" x2="${PAD.l+pW}" y2="${y}" stroke="var(--rule)" stroke-width="0.5"/>
+              <text x="${PAD.l-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)">${v}</text>`;
+    }).join('');
+
+    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:${H}px;">
+      ${yTicks}
+      <line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${PAD.t+pH}" stroke="var(--rule)" stroke-width="1"/>
+      <line x1="${PAD.l}" y1="${PAD.t+pH}" x2="${PAD.l+pW}" y2="${PAD.t+pH}" stroke="var(--rule)" stroke-width="1"/>
+      ${bars}
+    </svg>
+    <div style="display:flex;gap:16px;padding:0 0 8px;font-size:10px;color:var(--muted);">
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;background:var(--go);opacity:.82;display:inline-block;"></span>Aangenomen</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;background:var(--stop);opacity:.75;display:inline-block;"></span>Verworpen</span>
+      <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;background:var(--rule);display:inline-block;"></span>Aangehouden / ingetrokken</span>
+    </div>`;
+  }
+
+  // ── DIVERGENDE BALK ───────────────────────────────────────────────────────
+  function divergingSVG() {
+    if (!nauwste.length) return '<div class="viz-empty">Geen stemmingsdata — voor_pct ontbreekt in moties.json</div>';
+    const rowH = 38, PAD = { l:196, r:88, t:20, b:8 };
+    const W = 720;
+    const H = nauwste.length * rowH + PAD.t + PAD.b;
+    const barAreaW = W - PAD.l - PAD.r;
+    const midX = PAD.l + barAreaW / 2;
+
+    // Scale: 0–100% maps to 0–barAreaW (center = 50% = midX)
+    // tegen bar: extends LEFT  from midX by (tp/100)*barAreaW/2... 
+    // No: full scale. 50% vote → bar reaches midX. 100% → bar fills full side.
+    // Both bars anchored at center, each scaled 0-100% → 0 to (barAreaW/2)
+    // This means 50/50 → each bar = barAreaW/2, meeting at center. ✓
+    const halfBar = barAreaW / 2;
+
+    const header = `
+      <text x="${PAD.l + halfBar/2}" y="13" text-anchor="middle" font-size="9" fill="var(--stop)" font-weight="700">← TEGEN</text>
+      <text x="${PAD.l + halfBar + halfBar/2}" y="13" text-anchor="middle" font-size="9" fill="var(--go)" font-weight="700">VOOR →</text>`;
+
+    const rows = nauwste.map((m, i) => {
+      const y    = PAD.t + i * rowH;
+      const tp   = m.tegen_pct || 0;
+      const vp   = m.voor_pct  || 0;
+      const tW   = Math.round((tp / 100) * halfBar);
+      const vW   = Math.round((vp / 100) * halfBar);
+      const rowBg = i % 2 === 0 ? 'var(--paper)' : 'transparent';
+      const isAan = m.status === 'aangenomen';
+      const sKleur = isAan ? 'var(--go)' : 'var(--stop)';
+      const sLabel = isAan ? '✓ Aangenomen' : '✗ Verworpen';
+      // Strip motion ID from title
+      const titelKort = m.titel.replace(/^[A-Z0-9]+(?:\s+\([^)]+\))?\s+/i, '').slice(0, 34);
+
+      return `
+        <rect x="0" y="${y}" width="${W}" height="${rowH}" fill="${rowBg}"/>
+        <line x1="${midX}" y1="${y+4}" x2="${midX}" y2="${y+rowH-4}" stroke="var(--ink2)" stroke-width="1.5"/>
+        <text x="${PAD.l-8}" y="${y+rowH/2-3}" text-anchor="end" font-size="10" fill="var(--text)" font-weight="500">${esc(titelKort)}${m.titel.replace(/^[A-Z0-9]+(?:\s+\([^)]+\))?\s+/i,'').length > 34 ? '…' : ''}</text>
+        <text x="${PAD.l-8}" y="${y+rowH/2+10}" text-anchor="end" font-size="9" fill="var(--muted)">${fmtDate(m.datum,'short')} · marge ${m.marge}%</text>
+        <rect x="${midX-tW}" y="${y+9}" width="${tW}" height="${rowH-18}" fill="var(--stop)" opacity="0.75" rx="1">
+          <title>Tegen: ${tp}%</title></rect>
+        <rect x="${midX}" y="${y+9}" width="${vW}" height="${rowH-18}" fill="var(--go)" opacity="0.8" rx="1">
+          <title>Voor: ${vp}%</title></rect>
+        ${tW > 22 ? `<text x="${midX-tW/2}" y="${y+rowH/2+4}" text-anchor="middle" font-size="9" fill="white" font-weight="700">${tp}%</text>` : ''}
+        ${vW > 22 ? `<text x="${midX+vW/2}" y="${y+rowH/2+4}" text-anchor="middle" font-size="9" fill="white" font-weight="700">${vp}%</text>` : ''}
+        <text x="${W-PAD.r+6}" y="${y+rowH/2+4}" text-anchor="start" font-size="10" fill="${sKleur}" font-weight="700">${sLabel}</text>`;
+    }).join('');
+
+    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:${H}px;">
+      ${header}${rows}
+    </svg>`;
+  }
+
+  // ── HTML ──────────────────────────────────────────────────────────────────
+  const maxInd = topIndieners[0]?.totaal || 1;
+  const maxCS  = topCoSign[0]?.[1] || 1;
+
   el.innerHTML = `
-    <div class="viz-stat-row">
-      <div class="viz-stat"><div class="viz-stat-label">Totaal ingediend</div><div class="viz-stat-value">${totaal}</div><div class="viz-stat-sub">moties &amp; amendementen</div></div>
-      <div class="viz-stat"><div class="viz-stat-label">Slagingspercentage</div><div class="viz-stat-value" style="color:var(--go)">${pctGlobaal}%</div><div class="viz-stat-sub">van ${metStatus} met stemuitslag</div></div>
-      <div class="viz-stat"><div class="viz-stat-label">Meest actief</div><div class="viz-stat-value" style="font-size:22px;padding-top:6px;">${meestActief ? esc(meestActief.naam) : '—'}</div><div class="viz-stat-sub">${meestActief ? meestActief.totaal + ' ingediend' : ''}</div></div>
+    <div class="viz-stat-row" style="margin-bottom:16px;">
+      <div class="viz-stat">
+        <div class="viz-stat-label">Totaal ingediend</div>
+        <div class="viz-stat-value">${totaal}</div>
+        <div class="viz-stat-sub">moties &amp; amendementen</div>
+      </div>
+      <div class="viz-stat">
+        <div class="viz-stat-label">Slagingspercentage</div>
+        <div class="viz-stat-value" style="color:var(--go)">${pctGlobaal}%</div>
+        <div class="viz-stat-sub">van ${metStatus} met uitslag</div>
+      </div>
+      <div class="viz-stat">
+        <div class="viz-stat-label">Meest actief</div>
+        <div class="viz-stat-value" style="font-size:22px;padding-top:6px;">${esc(meestActief.naam)}</div>
+        <div class="viz-stat-sub">${meestActief.totaal} ingediend</div>
+      </div>
     </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <span class="card-title">Effectiviteit × Volume</span>
+        <span style="font-size:11px;color:var(--muted);">wie dient veel in én haalt het door de raad?</span>
+      </div>
+      <div style="padding:12px 20px 0;">${scatterSVG()}</div>
+    </div>
+
     <div class="card" style="margin-bottom:16px;">
       <div class="card-header"><span class="card-title">Moties &amp; amendementen per maand</span></div>
-      <div style="padding:12px 20px 8px;">${trendSVG()}</div>
+      <div style="padding:12px 20px 0;">${trendSVG()}</div>
     </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <span class="card-title">Nauwste stemmingen</span>
+        <span style="font-size:11px;color:var(--muted);">gesorteerd op kleinste marge</span>
+      </div>
+      <div style="padding:12px 20px 8px;">${divergingSVG()}</div>
+    </div>
+
     <div class="viz-row">
       <div class="card">
-        <div class="card-header"><span class="card-title">Slagingspercentage per partij</span></div>
-        <div class="viz-bar-list">
-          ${partijLijst.length === 0 ? '<div class="viz-empty">Onvoldoende stemmingsdata</div>' : partijLijst.map(p => `<div class="viz-bar-row"><div class="viz-bar-label" title="${esc(p.naam)}">${esc(p.naam)}</div><div class="viz-bar-track"><div class="viz-bar-fill" style="width:${p.pct ?? 0}%;background:${(p.pct ?? 0) >= 50 ? 'var(--go)' : 'var(--stop)'}"></div></div><div class="viz-bar-pct">${p.pct !== null ? p.pct + '%' : '—'}</div></div>`).join('')}
+        <div class="card-header">
+          <span class="card-title">Meest actieve indieners</span>
+          <span style="font-size:11px;color:var(--muted);">balk = volume · kleur = slagings%</span>
         </div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:16px;">
-        <div class="card">
-          <div class="card-header"><span class="card-title">Aantal ingediend per partij</span></div>
-          <div class="viz-bar-list">
-            ${partijLijst.map(p => `<div class="viz-bar-row"><div class="viz-bar-label" title="${esc(p.naam)}">${esc(p.naam)}</div><div class="viz-bar-track"><div class="viz-bar-fill" style="width:${Math.round(p.totaal/maxTotaal*100)}%;background:var(--teal)"></div></div><div class="viz-bar-pct">${p.totaal}</div></div>`).join('')}
-          </div>
-        </div>
-        ${topIndieners.length ? `<div class="card"><div class="card-header"><span class="card-title">Meest actieve indieners</span></div><div class="viz-bar-list">${topIndieners.map(([naam, s]) => `<div class="viz-bar-row"><div class="viz-bar-label" title="${esc(naam)}">${esc(naam)}</div><div class="viz-bar-track"><div class="viz-bar-fill" style="width:${Math.round(s.totaal/topIndieners[0][1].totaal*100)}%;background:var(--navy)"></div></div><div class="viz-bar-pct">${s.totaal}</div></div>`).join('')}</div></div>` : ''}
-      </div>
-    </div>
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-header"><span class="card-title">Nauwste stemmingen</span><span style="font-size:11px;color:var(--muted);">kleinste marge tussen voor en tegen</span></div>
-      ${controversieel.length === 0 ? '<div class="viz-empty">Geen stemmingsdata beschikbaar</div>' : `<table style="width:100%;border-collapse:collapse;"><thead><tr><th>Motie / amendement</th><th>Partij</th><th>Stemverhouding</th><th>Uitslag</th></tr></thead><tbody>${controversieel.map(m => `<tr><td><div class="motie-title">${esc(m.titel)}</div><div class="motie-desc">${fmtDate(m.datum, 'full')}</div></td><td><span class="badge badge-teal">${esc(m.partij || '—')}</span></td><td style="min-width:140px;">${stemmingBar(m)}<div style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--stop);margin-top:2px;">marge: ${m.marge}%</div></td><td>${statusBadge(m.status)}</td></tr>`).join('')}</tbody></table>`}
-    </div>
-    <div class="viz-row" style="margin-bottom:16px;">
-      <div class="card">
-        <div class="card-header"><span class="card-title">Ingetrokken vs. verworpen per partij</span></div>
         <div class="viz-bar-list">
-          ${partijVerlies.length === 0 ? '<div class="viz-empty">Geen data</div>' : partijVerlies.map(p => { const totNeg = p.verworpen + p.ingetrokken; const verwPct = totNeg ? Math.round(p.verworpen / totNeg * 100) : 0; const ingtPct = 100 - verwPct; return `<div class="viz-bar-row"><div class="viz-bar-label" title="${esc(p.naam)}">${esc(p.naam)}</div><div class="stacked-bar-track"><div style="width:${verwPct}%;background:var(--stop);opacity:0.8;"></div><div style="width:${ingtPct}%;background:var(--hold);opacity:0.8;"></div></div><div class="viz-bar-pct" style="width:52px;">${p.verworpen}v / ${p.ingetrokken}i</div></div>`; }).join('')}
-          <div class="viz-legend"><span class="viz-legend-item"><span class="viz-legend-dot" style="background:var(--stop);opacity:0.8;"></span> Verworpen</span><span class="viz-legend-item"><span class="viz-legend-dot" style="background:var(--hold);opacity:0.8;"></span> Ingetrokken</span></div>
+          ${topIndieners.map(p => {
+            const kleur = p.pct === null ? 'var(--rule)' : p.pct >= 60 ? 'var(--go)' : p.pct >= 35 ? 'var(--hold)' : 'var(--stop)';
+            return `<div class="viz-bar-row">
+              <div class="viz-bar-label" title="${esc(p.naam)}">${esc(p.naam)}</div>
+              <div class="viz-bar-track">
+                <div class="viz-bar-fill" style="width:${Math.round(p.totaal/maxInd*100)}%;background:${kleur};"></div>
+              </div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);width:58px;text-align:right;flex-shrink:0;">${p.totaal} · ${p.pct !== null ? p.pct+'%' : '—'}</div>
+            </div>`;
+          }).join('')}
         </div>
       </div>
       <div class="card">
-        <div class="card-header"><span class="card-title">Motie vs. amendement per partij</span></div>
+        <div class="card-header">
+          <span class="card-title">Politieke samenwerking</span>
+          <span style="font-size:11px;color:var(--muted);">meest voorkomende combinaties</span>
+        </div>
         <div class="viz-bar-list">
-          ${partijType.length === 0 ? '<div class="viz-empty">Geen data</div>' : partijType.map(p => { const totMA = p.moties_count + p.amendementen_count; const motPct = totMA ? Math.round(p.moties_count / totMA * 100) : 0; const amePct = 100 - motPct; return `<div class="viz-bar-row"><div class="viz-bar-label" title="${esc(p.naam)}">${esc(p.naam)}</div><div class="stacked-bar-track"><div style="width:${motPct}%;background:var(--navy);"></div><div style="width:${amePct}%;background:var(--teal);"></div></div><div class="viz-bar-pct" style="width:52px;">${p.moties_count}m / ${p.amendementen_count}a</div></div>`; }).join('')}
-          <div class="viz-legend"><span class="viz-legend-item"><span class="viz-legend-dot" style="background:var(--navy);"></span> Motie</span><span class="viz-legend-item"><span class="viz-legend-dot" style="background:var(--teal);"></span> Amendement</span></div>
+          ${topCoSign.length === 0
+            ? '<div class="viz-empty">Geen medeondertekenaardata — controleer het fracties-veld</div>'
+            : topCoSign.map(([combo, count]) => {
+                const [a, b] = combo.split('||');
+                return `<div class="viz-bar-row">
+                  <div style="width:158px;flex-shrink:0;display:flex;align-items:center;gap:4px;overflow:hidden;">
+                    <span class="badge badge-teal" style="max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(a)}">${esc(a)}</span>
+                    <span style="color:var(--muted);font-size:9px;flex-shrink:0;">+</span>
+                    <span class="badge badge-navy" style="max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(b||'')}">${esc(b||'')}</span>
+                  </div>
+                  <div class="viz-bar-track">
+                    <div class="viz-bar-fill" style="width:${Math.round(count/maxCS*100)}%;background:var(--navy);"></div>
+                  </div>
+                  <div class="viz-bar-pct">${count}x</div>
+                </div>`;
+              }).join('')
+          }
         </div>
       </div>
-    </div>
-    <div class="card" style="margin-bottom:16px;">
-      <div class="card-header"><span class="card-title">Politieke samenwerking</span><span style="font-size:11px;color:var(--muted);">meest voorkomende partijcombinaties</span></div>
-      ${topCoSign.length === 0 ? '<div class="viz-empty">Geen medeondertekenaarsdata — controleer het <code>fracties</code>-veld in moties.json</div>' : `<div class="viz-bar-list">${(() => { const maxCS = topCoSign[0][1]; return topCoSign.map(([combo, count]) => { const parts = combo.split(' + '); return `<div class="viz-bar-row" style="gap:8px;"><div style="width:200px;flex-shrink:0;display:flex;align-items:center;gap:4px;overflow:hidden;"><span class="badge badge-teal" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;" title="${esc(parts[0])}">${esc(parts[0])}</span><span style="color:var(--muted);font-size:10px;">+</span><span class="badge badge-navy" style="max-width:80px;overflow:hidden;text-overflow:ellipsis;" title="${esc(parts[1]||'')}">${esc(parts[1]||'')}</span></div><div class="viz-bar-track"><div class="viz-bar-fill" style="width:${Math.round(count/maxCS*100)}%;background:var(--navy);"></div></div><div class="viz-bar-pct">${count}x</div></div>`; }).join(''); })()}</div>`}
-    </div>
-  `;
+    </div>`;
 }
 
 // ── BEKENDMAKINGEN ────────────────────────────────────────────────────────────
