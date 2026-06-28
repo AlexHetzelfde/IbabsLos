@@ -662,7 +662,7 @@ function renderMotiesVisuals() {
           ${topIndieners.map(p => {
             const kleur = p.pct === null ? 'var(--rule)' : p.pct >= 60 ? 'var(--go)' : p.pct >= 35 ? 'var(--hold)' : 'var(--stop)';
             return `<div class="viz-bar-row">
-              <div class="viz-bar-label" title="${esc(p.naam)}">${esc(p.naam)}</div>
+              <div class="viz-bar-label" style="width:180px;" title="${esc(p.naam)}">${esc(p.naam)}</div>
               <div class="viz-bar-track">
                 <div class="viz-bar-fill" style="width:${Math.round(p.totaal/maxInd*100)}%;background:${kleur};"></div>
               </div>
