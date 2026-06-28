@@ -649,7 +649,7 @@ function renderMotiesVisuals() {
         <span class="card-title">Nauwste stemmingen</span>
         <span style="font-size:11px;color:var(--muted);">gesorteerd op kleinste marge</span>
       </div>
-      <div style="padding:12px 20px 8px;">${divergingSVG()}</div>
+      <div>${divergingHTML()}</div>
     </div>
 
     <div class="viz-row">
