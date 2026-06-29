@@ -478,26 +478,50 @@ function renderMotiesVisuals() {
       <text x="${PAD.l+pW/2}" y="${H-2}" text-anchor="middle" font-size="10" fill="var(--muted)">Aantal ingediend →</text>
       <text x="10" y="${PAD.t+pH/2}" text-anchor="middle" font-size="10" fill="var(--muted)" transform="rotate(-90,10,${PAD.t+pH/2})">Slagings% →</text>`;
 
-    // Large dots first so small ones render on top
+    // Eerste pass: bereken alle dot- en labelposities
     const sorted = [...scatter].sort((a, b) => b.totaal - a.totaal);
-    const dots = sorted.map(p => {
+    const dotData = sorted.map(p => {
       const x = Math.round(PAD.l + (p.totaal / maxX) * pW);
       const y = Math.round(PAD.t + pH - (p.pct / 100) * pH);
       const r = Math.round(minR + (p.totaal / maxTot) * (maxR - minR));
+      const k = kort(p.naam);
+      const useLeft = x + r + 4 + k.length * 6.5 > W - 10;
+      const lx = useLeft ? x - r - 4 : x + r + 4;
+      const anchor = useLeft ? 'end' : 'start';
+      return { p, x, y, r, k, lx, ly: y, anchor };
+    });
+
+    // Tweede pass: label collision detection — verschuif labels verticaal bij overlap
+    const geplaatst = [];
+    dotData.forEach(d => {
+      const lw = d.k.length * 6.5 + 8;
+      const lh = 24;
+      let ly = d.y;
+      for (let poging = 0; poging < 16; poging++) {
+        const botst = geplaatst.some(g =>
+          Math.abs(d.lx - g.lx) < lw && Math.abs(ly - g.ly) < lh
+        );
+        if (!botst) break;
+        // Wissel boven/onder: even pogingen omhoog, oneven omlaag
+        ly = d.y + (poging % 2 === 0 ? -1 : 1) * Math.ceil((poging + 1) / 2) * lh;
+      }
+      d.ly = ly;
+      geplaatst.push({ lx: d.lx, ly });
+    });
+
+    // Genereer SVG — grote dots eerst zodat kleine er bovenop vallen
+    const dots = dotData.map(({ p, x, y, r, k, lx, ly, anchor }) => {
       const isC  = COALITIE_FRACTIES.has(p.naam);
       const fill = isC ? '#006B7B' : '#0D1B2A';
       const op   = isC ? 0.82 : 0.62;
-      const k    = kort(p.naam);
-      // Keep label inside canvas
-      const useLeft = x + r + 4 + k.length * 6.5 > W - 10;
-      const lx     = useLeft ? x - r - 4 : x + r + 4;
-      const anchor  = useLeft ? 'end' : 'start';
+      const heeftLijn = Math.abs(ly - y) > 6;
       return `<g>
         <circle cx="${x}" cy="${y}" r="${r}" fill="${fill}" fill-opacity="${op}" stroke="${fill}" stroke-width="1.5" stroke-opacity="0.3">
           <title>${p.naam}: ${p.totaal} ingediend — ${p.pct}% aangenomen (${p.aangenomen} van ${p.aangenomen+p.verworpen} met uitslag)</title>
         </circle>
-        <text x="${lx}" y="${y+3}" text-anchor="${anchor}" font-size="10" fill="var(--text)" font-weight="600">${esc(k)}</text>
-        <text x="${lx}" y="${y+13}" text-anchor="${anchor}" font-size="9" fill="var(--muted)">${p.pct}%</text>
+        ${heeftLijn ? `<line x1="${lx}" y1="${y}" x2="${lx}" y2="${ly}" stroke="var(--rule)" stroke-width="0.8" stroke-dasharray="2,2"/>` : ''}
+        <text x="${lx}" y="${ly+3}" text-anchor="${anchor}" font-size="10" fill="var(--text)" font-weight="600">${esc(k)}</text>
+        <text x="${lx}" y="${ly+13}" text-anchor="${anchor}" font-size="9" fill="var(--muted)">${p.pct}%</text>
       </g>`;
     }).join('');
 
