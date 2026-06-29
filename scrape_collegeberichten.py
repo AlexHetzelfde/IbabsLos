@@ -201,41 +201,6 @@ def analyseer_ai_claims(tekst, titel, portefeuillehouder, api_key):
         return []
 
     tekst_kort = tekst[:8000]
-    prompt = f"""..."""  # ongewijzigd
-    body = json.dumps({
-    "contents": [{"parts": [{"text": prompt}]}],
-    "generationConfig": {"temperature": 0.2, "maxOutputTokens": 2048}
-}).encode("utf-8")
-
-    for model in GEMINI_MODELS:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-        req = urllib.request.Request(
-            url, data=body,
-            headers={"Content-Type": "application/json"},
-            method="POST"
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-            if data.get("error"):
-                print(f"  ({model} mislukt: {data['error'].get('message')})")
-                continue
-            raw = data["candidates"][0]["content"]["parts"][0]["text"]
-            match = re.search(r"\[[\s\S]*\]", raw)
-            if not match:
-                return []
-            ai_claims = json.loads(match.group(0))
-            for c in ai_claims:
-                c["bron"] = "ai"
-                c["kruischeck"] = c.get("kruischeck") or None
-            return ai_claims
-        except Exception as e:
-            print(f"  ({model} mislukt: {e})")
-            continue
-
-    return []
-
-    tekst_kort = tekst[:8000]
 
     prompt = f"""Je bent een factcheck-assistent voor een journalist die collegebrieven van de gemeente Zaanstad analyseert.
 
@@ -279,7 +244,6 @@ Tekst:
         if not match:
             return []
         ai_claims = json.loads(match.group(0))
-        # Voeg bron-veld toe
         for c in ai_claims:
             c["bron"]       = "ai"
             c["kruischeck"] = c.get("kruischeck") or None
