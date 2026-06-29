@@ -24,7 +24,8 @@
 <nav>
   <div class="tab active" data-tab="overzicht"     onclick="switchTab(this)">Overzicht</div>
   <div class="tab"        data-tab="vergaderingen"  onclick="switchTab(this)">Vergaderingen</div>
-  <div class="tab"        data-tab="moties"         onclick="switchTab(this)">Moties &amp; Stemmingen</div>
+  <!-- FIX: was "Moties & Stemmingen" — misleidend omdat Stemmingen een eigen tab heeft -->
+  <div class="tab"        data-tab="moties"         onclick="switchTab(this)">Moties</div>
   <div class="tab"        data-tab="bekendmakingen" onclick="switchTab(this)">Bekendmakingen</div>
   <div class="tab"        data-tab="stemmingen"     onclick="switchTab(this)">Stemmingen</div>
   <div class="tab"        data-tab="raadsvragen"    onclick="switchTab(this)">Raadsvragen</div>
@@ -123,26 +124,30 @@
         <option value="ingetrokken">Ingetrokken</option>
       </select>
       <select class="filter-select" id="filterType" onchange="renderMoties()">
-        <option value="">Motie &amp; Amendement</option>
+        <!-- FIX: was "Motie & Amendement" — suggereert een actief filter terwijl het "toon alles" betekent -->
+        <option value="">Alle typen</option>
         <option value="Motie">Alleen moties</option>
         <option value="Amendement">Alleen amendementen</option>
       </select>
     </div>
     <div class="card">
-      <table>
-        <thead>
-          <tr>
-            <th>Motie / Amendement</th>
-            <th>Partij</th>
-            <th>Datum</th>
-            <th>Status</th>
-            <th>Stemming</th>
-          </tr>
-        </thead>
-        <tbody id="motiesTable">
-          <tr><td colspan="5" class="empty">Laden...</td></tr>
-        </tbody>
-      </table>
+      <!-- FIX: overflow-x wrapper zodat de tabel op smalle schermen scrollbaar is -->
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Motie / Amendement</th>
+              <th>Partij</th>
+              <th>Datum</th>
+              <th>Status</th>
+              <th>Stemming</th>
+            </tr>
+          </thead>
+          <tbody id="motiesTable">
+            <tr><td colspan="5" class="empty">Laden...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
