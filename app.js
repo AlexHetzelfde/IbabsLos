@@ -317,7 +317,8 @@ function renderMoties() {
   const partij = document.getElementById('filterPartij').value;
   const status = document.getElementById('filterStatus').value;
   const type   = document.getElementById('filterType').value;
-  let f = moties.filter(m => m.status);
+  // FIX: was `m.status` (falsy op lege string), nu expliciet null-check
+  let f = moties.filter(m => m.status != null);
   if (partij) f = f.filter(m => m.partij === partij);
   if (status) f = f.filter(m => m.status === status);
   if (type)   f = f.filter(m => m.type === type);
@@ -500,7 +501,9 @@ function renderMotiesVisuals() {
       </g>`;
     }).join('');
 
-    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:${H}px;overflow:visible;"
+    // FIX: sluitende > van de <svg>-openingstag was weggevallen, waardoor qBg
+    // als attribuut werd geïnterpreteerd en de hele scatter chart niet renderde.
+    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:${H}px;overflow:visible;">
       ${qBg}
       <line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${PAD.t+pH}" stroke="var(--rule)" stroke-width="1.5"/>
       <line x1="${PAD.l}" y1="${PAD.t+pH}" x2="${PAD.l+pW}" y2="${PAD.t+pH}" stroke="var(--rule)" stroke-width="1.5"/>
@@ -662,7 +665,7 @@ function renderMotiesVisuals() {
           ${topIndieners.map(p => {
             const kleur = p.pct === null ? 'var(--rule)' : p.pct >= 60 ? 'var(--go)' : p.pct >= 35 ? 'var(--hold)' : 'var(--stop)';
             return `<div class="viz-bar-row">
-              <div class="viz-bar-label" style="width:180px;" title="${esc(p.naam)}">${esc(p.naam)}</div>
+              <div class="viz-bar-label" style="width:180px;" title="${esc(p.naam)}">${esc(p.naam)}</div>
               <div class="viz-bar-track">
                 <div class="viz-bar-fill" style="width:${Math.round(p.totaal/maxInd*100)}%;background:${kleur};"></div>
               </div>
@@ -748,7 +751,7 @@ function tekenLijnGrafiek(containerId, data, label) {
 function tekenHorizontaleBalken(containerId, data) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  const entries = Object.entries(data).sort((a,b) => b[1] - a[1]);
+  const entries = Object.entries(data).sort((a,b) => b[1]-a[1]);
   if (entries.length === 0) { container.innerHTML = '<div class="viz-empty">geen data</div>'; return; }
   const maxVal = entries[0][1];
   container.innerHTML = entries.map(([wijk, count]) => `<div class="bk-bar-row"><div class="bk-bar-label">${esc(wijk)}</div><div class="bk-bar-track"><div class="bk-bar-fill" style="width:${Math.round(count/maxVal*100)}%"></div></div><div class="bk-bar-count">${count}</div></div>`).join('');
@@ -971,13 +974,13 @@ function renderStemLoyaliteit() {
   const rijen = Object.entries(fractieMap)
     .filter(([, v]) => v.totaal > 0)
     .sort((a, b) => (b[1].mee / b[1].totaal) - (a[1].mee / a[1].totaal));
-  let html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+  let html = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
     <thead><tr><th style="text-align:left;">Fractie</th><th style="text-align:right;">Mee</th><th style="text-align:right;">Totaal</th><th style="text-align:right;">%</th></tr></thead><tbody>`;
   rijen.forEach(([fractie, v]) => {
     const pct = Math.round(v.mee / v.totaal * 100);
     html += `<tr><td>${esc(fractie)}</td><td style="text-align:right;">${v.mee}</td><td style="text-align:right;">${v.totaal}</td><td style="text-align:right;">${pct}%</td></tr>`;
   });
-  html += '</tbody></table>';
+  html += '</tbody></table></div>';
   html += '<div style="margin-top:8px;font-size:10px;color:var(--muted);">Een fractie stemde "mee met de meerderheid" als ze vóór stemde bij een aangenomen voorstel, of tegen bij een verworpen voorstel.</div>';
   el.style.padding = '12px 16px';
   el.innerHTML = html;
@@ -1004,7 +1007,7 @@ function renderStemAllianties() {
     }
   });
   let html = '<div style="overflow-x:auto;"><table style="border-collapse:collapse;font-size:11px;"><tr><th style="min-width:120px;"></th>';
-  allFracties.forEach(f => { html += `<th style="writing-mode:vertical-rl;transform:rotate(180deg);padding:4px;font-size:10px;max-height:100px;" title="${esc(f)}">${esc(f)}</th>`; });
+  allFracties.forEach(f => { html += `<th style="padding:4px;font-size:10px;max-height:100px;" title="${esc(f)}"><div style="writing-mode:vertical-rl;transform:rotate(180deg);overflow:hidden;max-height:96px;text-overflow:ellipsis;">${esc(f)}</div></th>`; });
   html += '</tr>';
   allFracties.forEach(fRij => {
     html += `<tr><td style="text-align:right;padding-right:8px;font-weight:600;white-space:nowrap;">${esc(fRij)}</td>`;
@@ -1014,7 +1017,7 @@ function renderStemAllianties() {
       const samen = coVote[key] || 0, tot = coTotal[key] || 0;
       const pct = tot ? Math.round(samen / tot * 100) : 0;
       const kleur = `hsl(200, ${Math.round(pct * 0.8)}%, ${70 - pct * 0.3}%)`;
-      html += `<td style="text-align:center;padding:6px;background:${kleur};cursor:pointer;" onclick="toonAlliantieDetail('${esc(fRij)}','${esc(fKol)}')" title="${fRij} & ${fKol}: ${samen}/${tot} (${pct}%)">${samen}<br><span style="font-size:9px;">${pct}%</span></td>`;
+      html += `<td style="text-align:center;padding:6px;background:${kleur};cursor:pointer;" onclick="toonAlliantieDetail('${esc(fRij)}','${esc(fKol)}')" title="${esc(fRij)} &amp; ${esc(fKol)}: ${samen}/${tot} (${pct}%)">${samen}<br><span style="font-size:9px;">${pct}%</span></td>`;
     });
     html += '</tr>';
   });
@@ -1117,13 +1120,13 @@ async function renderAanwezigheid() {
     const data = await resp.json();
     if (!data.length) { container.innerHTML = '<div class="viz-empty">Nog geen presentiedata.</div>'; return; }
     data.sort((a, b) => (b.afwezig - a.afwezig) || a.naam.localeCompare(b.naam));
-    let html = `<table style="width:100%;border-collapse:collapse;font-size:12px;">
+    let html = `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">
       <thead><tr><th style="text-align:left;">Raadslid</th><th style="text-align:left;">Fractie</th><th style="text-align:right;">Aanwezig</th><th style="text-align:right;">Afwezig</th><th style="text-align:right;">Totaal</th></tr></thead><tbody>`;
     data.forEach(r => {
       const totaal = r.aanwezig + r.afwezig;
       html += `<tr><td>${esc(r.naam)}</td><td>${esc(r.fractie || '')}</td><td style="text-align:right;">${r.aanwezig}</td><td style="text-align:right;">${r.afwezig}</td><td style="text-align:right;">${totaal}</td></tr>`;
     });
-    html += '</tbody></table><div style="margin-top:6px;font-size:10px;color:var(--muted);">Aanwezigheid per stemdag (deelname aan stemmingen).</div>';
+    html += '</tbody></table></div><div style="margin-top:6px;font-size:10px;color:var(--muted);">Aanwezigheid per stemdag (deelname aan stemmingen).</div>';
     container.innerHTML = html;
     container.classList.remove('raadslid-placeholder');
   } catch (e) {
@@ -1160,7 +1163,11 @@ function renderFractieloyaliteit() {
       if (!ledenMap[naam]) ledenMap[naam] = { naam, fractie: raadslid.fractie, conform: 0, afwijkend: 0, details: [] };
       const fp = fractieStandpunt[raadslid.fractie];
       if (!fp) return;
-      const eigenStem = (s.raadsleden_voor || []).find(r => r.naam === naam) ? 'voor' : 'tegen';
+      // FIX: onthouding telde eerder altijd als 'tegen'; nu expliciet overgeslagen
+      const isVoor  = (s.raadsleden_voor || []).find(r => r.naam === naam);
+      const isTegen = (s.raadsleden_tegen || []).find(r => r.naam === naam);
+      if (!isVoor && !isTegen) return; // onthouding overslaan voor loyaliteitsberekening
+      const eigenStem = isVoor ? 'voor' : 'tegen';
       if (eigenStem === fp) ledenMap[naam].conform++;
       else { ledenMap[naam].afwijkend++; ledenMap[naam].details.push({ stemming: s.titel, datum: s.datum, eigen: eigenStem, fractie: fp }); }
     });
@@ -1593,8 +1600,10 @@ function fmtDate(s, mode) {
   } catch { return s; }
 }
 
+// FIX: enkelvoudige aanhalingstekens toegevoegd (&#39;) — breekt anders
+// onclick-attributen bij fractienamen met apostrof (bv. "D'66")
 function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function catLabel(cat) {
