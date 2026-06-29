@@ -124,7 +124,8 @@ main { max-width: 1160px; margin: 0 auto; padding: 24px; }
 .speaker-time { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--teal); }
 
 /* ── BADGE ── */
-.badge { font-size: 10px; font-weight: 700; padding: 2px 7px; letter-spacing: 0.3px; }
+/* FIX: flex-shrink:0 voorkomt dat badges comprimeren naast lange titels in meeting/cb-rijen */
+.badge { font-size: 10px; font-weight: 700; padding: 2px 7px; letter-spacing: 0.3px; flex-shrink: 0; }
 .badge-teal  { background: var(--teal-bg); color: var(--teal); }
 .badge-go    { background: var(--go-bg);   color: var(--go); }
 .badge-stop  { background: var(--stop-bg); color: var(--stop); }
@@ -169,7 +170,8 @@ tbody tr:hover td { background: var(--paper); }
 .viz-bar-list { padding: 8px 20px 12px; }
 .viz-bar-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--rule); }
 .viz-bar-row:last-child { border-bottom: none; }
-.viz-bar-label { font-size: 12px; width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); flex-shrink: 0; }
+/* FIX: was 110px, te krap voor lange fractienamen zoals "Forum voor Democratie" */
+.viz-bar-label { font-size: 12px; width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); flex-shrink: 0; }
 .viz-bar-track { flex: 1; height: 20px; background: var(--paper); border-radius: 2px; overflow: hidden; }
 .viz-bar-fill { height: 100%; border-radius: 1px; transition: width 0.5s ease; }
 .viz-bar-pct { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); width: 36px; text-align: right; flex-shrink: 0; }
