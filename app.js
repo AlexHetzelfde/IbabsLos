@@ -35,7 +35,7 @@ function getAllFracties() {
 }
 
 // ── STATE ─────────────────────────────────────────────────────────────────────
-let vergaderingen = [], moties = [], bekendmakingen = [], raadsvragen = [], collegebrieven = [], stemmingen = [];
+let vergaderingen = [], moties = [], bekendmakingen = [], raadsvragen = [], collegebrieven = [], stemmingen = [], uitval = [];
 let huidigeClaims = [];
 let _chartFractie = null;
 
@@ -43,7 +43,7 @@ let _chartFractie = null;
 document.addEventListener('DOMContentLoaded', async () => {
   const savedKey = localStorage.getItem('zr_gemini_key');
   if (savedKey) document.getElementById('geminiKey').value = savedKey;
-  await Promise.all([loadVerg(), loadMoties(), loadBk(), loadRaadsvragen(), loadCollegebrieven(), loadStemmingen()]);
+  await Promise.all([loadVerg(), loadMoties(), loadBk(), loadRaadsvragen(), loadCollegebrieven(), loadStemmingen(), loadUitval()]);
   updateStats();
   renderOpgeslagenClaims();
   document.getElementById('headerMeta').textContent =
@@ -127,6 +127,218 @@ async function loadStemmingen() {
         ? '<div class="empty">Nog geen stemmingen — draai eerst de scraper.</div>'
         : `<div class="error-msg">Fout: ${e.message}</div>`;
   }
+}
+
+async function loadUitval() {
+  try {
+    const r = await fetch('./data/ebs_uitval.json');
+    if (!r.ok) throw new Error(r.status);
+    uitval = await r.json();
+    renderUitval();
+  } catch (e) {
+    document.getElementById('uvLijst').innerHTML =
+      e.message === '404'
+        ? '<div class="empty">Nog geen uitvaldata — draai eerst scrape_ebs.py.</div>'
+        : `<div class="error-msg">Fout: ${e.message}</div>`;
+  }
+}
+
+// ── EBS UITVAL ────────────────────────────────────────────────────────────────
+function renderUitval() {
+  const uitgevallen = uitval.filter(r => r.status === 'cancelled' || r.status === 'verkort');
+  const totaalRitten = uitval.length;
+
+  // ── STATS ─────────────────────────────────────────────────────────────────
+  document.getElementById('uvTotaal').textContent = uitgevallen.length;
+  const pct = totaalRitten ? Math.round(uitgevallen.length / totaalRitten * 100) : 0;
+  document.getElementById('uvPct').textContent = pct + '%';
+  const datums = [...new Set(uitval.map(r => r.datum))].sort();
+  document.getElementById('uvPeriode').textContent =
+    datums.length ? datums[0] + ' t/m ' + datums[datums.length - 1] : 'geen data';
+
+  const lijnTeller = {};
+  uitgevallen.forEach(r => { lijnTeller[r.lijn] = (lijnTeller[r.lijn] || 0) + 1; });
+  const topLijnEntry = Object.entries(lijnTeller).sort((a,b) => b[1]-a[1])[0];
+  if (topLijnEntry) {
+    document.getElementById('uvTopLijn').textContent = topLijnEntry[0];
+    document.getElementById('uvTopLijnSub').textContent = topLijnEntry[1] + ' uitvallen';
+  }
+
+  const oorzaakTeller = {};
+  uitgevallen.forEach(r => (r.oorzaak_categorieen || []).forEach(o => {
+    oorzaakTeller[o] = (oorzaakTeller[o] || 0) + 1;
+  }));
+  const topOorzaakEntry = Object.entries(oorzaakTeller).sort((a,b) => b[1]-a[1])[0];
+  if (topOorzaakEntry) {
+    document.getElementById('uvTopOorzaak').textContent = topOorzaakEntry[0];
+    document.getElementById('uvTopOorzaakSub').textContent = topOorzaakEntry[1] + 'x geregistreerd';
+  }
+
+  // ── UITVAL PER DAG (SVG) ──────────────────────────────────────────────────
+  const dagMap = {};
+  uitval.forEach(r => {
+    if (!dagMap[r.datum]) dagMap[r.datum] = { totaal: 0, cancelled: 0, verkort: 0 };
+    dagMap[r.datum].totaal++;
+    if (r.status === 'cancelled') dagMap[r.datum].cancelled++;
+    if (r.status === 'verkort')   dagMap[r.datum].verkort++;
+  });
+  const dagLijst = Object.entries(dagMap).sort((a,b) => a[0].localeCompare(b[0]));
+  const dagEl = document.getElementById('uvDagChart');
+
+  if (dagLijst.length < 1) {
+    dagEl.innerHTML = '<div class="viz-empty">Onvoldoende data</div>';
+  } else {
+    const W = 680, H = 180;
+    const PAD = { t: 10, r: 16, b: 36, l: 36 };
+    const pW = W - PAD.l - PAD.r, pH = H - PAD.t - PAD.b;
+    const maxC = Math.max(...dagLijst.map(([,d]) => d.cancelled + d.verkort), 1);
+    const slot = pW / dagLijst.length;
+    const barW = Math.max(6, Math.floor(slot * 0.6));
+
+    const bars = dagLijst.map(([datum, d], i) => {
+      const x    = PAD.l + i * slot + (slot - barW) / 2;
+      const yB   = PAD.t + pH;
+      const hCan = Math.round((d.cancelled / maxC) * pH);
+      const hVer = Math.round((d.verkort   / maxC) * pH);
+      const dd   = datum.slice(5); // MM-DD
+      return `
+        <rect x="${x}" y="${yB - hCan}" width="${barW}" height="${hCan}" fill="var(--stop)" opacity="0.82" rx="1">
+          <title>${datum}: ${d.cancelled} cancelled</title></rect>
+        <rect x="${x}" y="${yB - hCan - hVer}" width="${barW}" height="${hVer}" fill="var(--hold)" opacity="0.75">
+          <title>${datum}: ${d.verkort} verkort</title></rect>
+        <text x="${x+barW/2}" y="${H-4}" text-anchor="middle" font-size="9" fill="var(--muted)">${dd}</text>`;
+    }).join('');
+
+    const yTicks = [0, Math.ceil(maxC/2), maxC].map(v => {
+      const y = PAD.t + pH - (v/maxC)*pH;
+      return `<line x1="${PAD.l}" y1="${y}" x2="${PAD.l+pW}" y2="${y}" stroke="var(--rule)" stroke-width="0.5"/>
+              <text x="${PAD.l-4}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)">${v}</text>`;
+    }).join('');
+
+    dagEl.innerHTML = `
+      <svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:${H}px;">
+        ${yTicks}
+        <line x1="${PAD.l}" y1="${PAD.t}" x2="${PAD.l}" y2="${PAD.t+pH}" stroke="var(--rule)" stroke-width="1"/>
+        <line x1="${PAD.l}" y1="${PAD.t+pH}" x2="${PAD.l+pW}" y2="${PAD.t+pH}" stroke="var(--rule)" stroke-width="1"/>
+        ${bars}
+      </svg>
+      <div style="display:flex;gap:16px;padding:4px 0 12px;font-size:10px;color:var(--muted);">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;background:var(--stop);opacity:.82;display:inline-block;"></span>Cancelled</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;background:var(--hold);opacity:.75;display:inline-block;"></span>Verkort</span>
+      </div>`;
+  }
+
+  // ── UITVAL PER DAGDEEL ────────────────────────────────────────────────────
+  const dagdeelVolgorde = ['ochtendspits','dal','avondspits','avond','nacht','onbekend'];
+  const dagdeelLabels   = { ochtendspits:'Ochtendspits (7–9)', dal:'Dal (9–16)', avondspits:'Avondspits (16–19)', avond:'Avond (19–24)', nacht:'Nacht (0–7)', onbekend:'Onbekend' };
+  const dagdeelTeller = {};
+  uitgevallen.forEach(r => { dagdeelTeller[r.dagdeel] = (dagdeelTeller[r.dagdeel] || 0) + 1; });
+  const maxDd = Math.max(...Object.values(dagdeelTeller), 1);
+  document.getElementById('uvDagdeelChart').innerHTML = dagdeelVolgorde
+    .filter(d => dagdeelTeller[d] > 0)
+    .map(d => `<div class="viz-bar-row">
+      <div class="viz-bar-label" style="width:160px;">${dagdeelLabels[d]}</div>
+      <div class="viz-bar-track"><div class="viz-bar-fill" style="width:${Math.round(dagdeelTeller[d]/maxDd*100)}%;background:var(--stop);"></div></div>
+      <div class="viz-bar-pct">${dagdeelTeller[d]}</div>
+    </div>`).join('') || '<div class="viz-empty">Geen data</div>';
+
+  // ── UITVAL PER LIJN ───────────────────────────────────────────────────────
+  const maxLijn = Math.max(...Object.values(lijnTeller), 1);
+  const lijnLijst = Object.entries(lijnTeller).sort((a,b) => b[1]-a[1]);
+  document.getElementById('uvLijnChart').innerHTML = lijnLijst
+    .map(([lijn, n]) => {
+      const rit = uitgevallen.find(r => r.lijn === lijn);
+      const kleur = rit?.lijnkleur || 'var(--navy)';
+      return `<div class="viz-bar-row">
+        <div style="width:52px;flex-shrink:0;display:flex;align-items:center;">
+          <span class="badge" style="background:${kleur};color:#fff;font-size:11px;font-weight:700;">${esc(lijn)}</span>
+        </div>
+        <div class="viz-bar-track"><div class="viz-bar-fill" style="width:${Math.round(n/maxLijn*100)}%;background:var(--stop);"></div></div>
+        <div class="viz-bar-pct">${n}</div>
+      </div>`;
+    }).join('') || '<div class="viz-empty">Geen data</div>';
+
+  // ── UITVAL PER HALTE ──────────────────────────────────────────────────────
+  // We tellen per unieke rit (journey_id) het aantal haltes dat de rit aandoet
+  // bij ons — NIET het totaal aangetikte ritten per halte (dat zou dubbel tellen).
+  // Wat we wél tonen: bij welke halte is de uitval als EERST gesignaleerd?
+  const halteTeller = {};
+  uitgevallen.forEach(r => {
+    // Gebruik de vroegste halte als "primaire" halte voor deze rit
+    const eersteHalte = (r.haltes || [])[0];
+    if (eersteHalte) {
+      halteTeller[eersteHalte.halte_naam] = (halteTeller[eersteHalte.halte_naam] || 0) + 1;
+    }
+  });
+  const maxHalte = Math.max(...Object.values(halteTeller), 1);
+  document.getElementById('uvHalteChart').innerHTML = Object.entries(halteTeller)
+    .sort((a,b) => b[1]-a[1])
+    .map(([naam, n]) => `<div class="viz-bar-row">
+      <div class="viz-bar-label" style="width:200px;" title="${esc(naam)}">${esc(naam)}</div>
+      <div class="viz-bar-track"><div class="viz-bar-fill" style="width:${Math.round(n/maxHalte*100)}%;background:var(--teal);"></div></div>
+      <div class="viz-bar-pct">${n}</div>
+    </div>`).join('') || '<div class="viz-empty">Geen data</div>';
+
+  // ── UITVAL PER OORZAAK ────────────────────────────────────────────────────
+  const maxOorzaak = Math.max(...Object.values(oorzaakTeller), 1);
+  document.getElementById('uvOorzaakChart').innerHTML = Object.entries(oorzaakTeller)
+    .sort((a,b) => b[1]-a[1])
+    .map(([oorzaak, n]) => `<div class="viz-bar-row">
+      <div class="viz-bar-label" style="width:200px;">${esc(oorzaak)}</div>
+      <div class="viz-bar-track"><div class="viz-bar-fill" style="width:${Math.round(n/maxOorzaak*100)}%;background:var(--hold);"></div></div>
+      <div class="viz-bar-pct">${n}</div>
+    </div>`).join('') || '<div class="viz-empty">Geen data</div>';
+
+  // ── FILTER-OPTIES VULLEN ──────────────────────────────────────────────────
+  const selLijn = document.getElementById('filterUvLijn');
+  selLijn.innerHTML = '<option value="">Alle lijnen</option>';
+  [...new Set(uitgevallen.map(r => r.lijn).filter(Boolean))].sort((a,b)=>parseInt(a)-parseInt(b))
+    .forEach(l => { const o = document.createElement('option'); o.value = l; o.textContent = 'Lijn ' + l; selLijn.appendChild(o); });
+
+  renderUitvalLijst();
+}
+
+function renderUitvalLijst() {
+  const statusF  = document.getElementById('filterUvStatus').value;
+  const lijnF    = document.getElementById('filterUvLijn').value;
+  const dagdeelF = document.getElementById('filterUvDagdeel').value;
+
+  let f = uitval.filter(r => r.status === 'cancelled' || r.status === 'verkort');
+  if (statusF)  f = f.filter(r => r.status === statusF);
+  if (lijnF)    f = f.filter(r => r.lijn === lijnF);
+  if (dagdeelF) f = f.filter(r => r.dagdeel === dagdeelF);
+
+  document.getElementById('uvLijstCount').textContent = f.length + ' uitgevallen ritten';
+
+  document.getElementById('uvLijst').innerHTML = f.length === 0
+    ? '<div class="empty">Geen uitgevallen ritten gevonden.</div>'
+    : f.map(r => {
+        const eersteHalte  = (r.haltes || [])[0];
+        const statusKleur  = r.status === 'cancelled' ? 'var(--stop)' : 'var(--hold)';
+        const statusLabel  = r.status === 'cancelled' ? '✗ Cancelled' : '⚠ Verkort';
+        const oorzaakStr   = (r.oorzaak_categorieen || []).join(', ') || '—';
+        return `<div class="bk-item">
+          <div class="bk-top">
+            <div style="flex:1;">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:var(--muted);">${esc(r.datum)} ${esc(r.eerste_tijd || '')}</span>
+                <span class="badge" style="background:${r.lijnkleur||'var(--navy)'};color:#fff;font-size:11px;font-weight:700;">${esc(r.lijn || '?')}</span>
+                <span style="font-size:13px;font-weight:600;">${esc(eersteHalte?.bestemming || '—')}</span>
+                <span style="font-size:12px;font-weight:700;color:${statusKleur};">${statusLabel}</span>
+                <span class="badge badge-teal" style="font-size:10px;">${esc(r.dagdeel)}</span>
+              </div>
+              <div class="bk-meta" style="flex-wrap:wrap;gap:6px;">
+                ${(r.haltes || []).map(h => `<span style="font-size:11px;color:var(--muted);">
+                  ${esc(h.halte_naam)} ${esc(h.geplande_tijd)}${h.platform ? ' · '+esc(h.platform) : ''}
+                </span>`).join('<span style="color:var(--rule)">·</span>')}
+              </div>
+              ${r.oorzaak_categorieen?.length ? `<div style="margin-top:4px;font-size:11px;color:var(--hold);">Oorzaak: ${esc(oorzaakStr)}</div>` : ''}
+              ${r.terminus_alert ? `<div style="margin-top:3px;font-size:11px;color:var(--stop);">${esc(r.terminus_alert)}</div>` : ''}
+              ${r.advies ? `<div style="margin-top:3px;font-size:11px;color:var(--muted);">${esc(r.advies)}</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
 }
 
 async function loadCollegebrieven() {
