@@ -30,6 +30,7 @@
   <div class="tab"        data-tab="stemmingen"     onclick="switchTab(this)">Stemmingen</div>
   <div class="tab"        data-tab="raadsvragen"    onclick="switchTab(this)">Raadsvragen</div>
   <div class="tab"        data-tab="collegebrieven" onclick="switchTab(this)">Collegebrieven</div>
+  <div class="tab" data-tab="uitval"    onclick="switchTab(this)">🚌 Uitval</div>
   <div class="tab"        data-tab="factcheck"      onclick="switchTab(this)">✦ Factcheck</div>
 </nav>
 
@@ -299,6 +300,69 @@
     </div>
   </div>
 
+  <!-- ── UITVAL ── -->
+<div class="tab-content" id="tab-uitval">
+  <div class="stats" id="uitvalStats" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+    <div class="stat"><div class="stat-label">Uitgevallen ritten</div><div class="stat-value" id="uvTotaal">—</div><div class="stat-sub" id="uvPeriode">laden...</div></div>
+    <div class="stat"><div class="stat-label">Uitvalpercentage</div><div class="stat-value" style="color:var(--stop);" id="uvPct">—</div><div class="stat-sub" id="uvPctSub">van alle gescrapte ritten</div></div>
+    <div class="stat"><div class="stat-label">Meest getroffen lijn</div><div class="stat-value" style="font-size:36px;padding-top:10px;" id="uvTopLijn">—</div><div class="stat-sub" id="uvTopLijnSub">laden...</div></div>
+    <div class="stat"><div class="stat-label">Meest voorkomende oorzaak</div><div class="stat-value" style="font-size:20px;padding-top:14px;line-height:1.2;" id="uvTopOorzaak">—</div><div class="stat-sub" id="uvTopOorzaakSub">laden...</div></div>
+  </div>
+
+  <div class="viz-row" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Uitval per dag</span><span style="font-size:11px;color:var(--muted);">cancelled + verkort</span></div>
+      <div style="padding:12px 20px 0;" id="uvDagChart"><div class="empty">Laden...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Uitval per dagdeel</span></div>
+      <div class="viz-bar-list" id="uvDagdeelChart"><div class="empty">Laden...</div></div>
+    </div>
+  </div>
+
+  <div class="viz-row" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="card-header"><span class="card-title">Uitval per lijn</span></div>
+      <div class="viz-bar-list" id="uvLijnChart"><div class="empty">Laden...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span class="card-title">Uitval per halte</span><span style="font-size:11px;color:var(--muted);">per unieke rit (niet dubbel)</span></div>
+      <div class="viz-bar-list" id="uvHalteChart"><div class="empty">Laden...</div></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header"><span class="card-title">Uitval per oorzaakcategorie</span></div>
+    <div class="viz-bar-list" id="uvOorzaakChart"><div class="empty">Laden...</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Uitgevallen ritten</span>
+      <span class="card-link" id="uvLijstCount" style="cursor:default;">—</span>
+    </div>
+    <div class="filter-bar" style="padding:12px 16px 0;">
+      <select class="filter-select" id="filterUvStatus" onchange="renderUitvalLijst()">
+        <option value="">Alle statussen</option>
+        <option value="cancelled">Alleen cancelled</option>
+        <option value="verkort">Alleen verkort</option>
+      </select>
+      <select class="filter-select" id="filterUvLijn" onchange="renderUitvalLijst()">
+        <option value="">Alle lijnen</option>
+      </select>
+      <select class="filter-select" id="filterUvDagdeel" onchange="renderUitvalLijst()">
+        <option value="">Alle dagdelen</option>
+        <option value="ochtendspits">Ochtendspits (7-9)</option>
+        <option value="dal">Dal (9-16)</option>
+        <option value="avondspits">Avondspits (16-19)</option>
+        <option value="avond">Avond (19-24)</option>
+        <option value="nacht">Nacht (0-7)</option>
+      </select>
+    </div>
+    <div id="uvLijst" style="margin-top:8px;"><div class="empty">Laden...</div></div>
+  </div>
+</div>
+  
   <!-- ── FACTCHECK ── -->
   <div class="tab-content" id="tab-factcheck">
     <div class="factcheck-grid">
