@@ -1,5 +1,42 @@
 [
   {
+    "id": "08124a55-0312-495d-bfe6-765a7692e71c",
+    "titel": "Kennisgeving Wethouder Slegers: Afwijzing natuurvergunning busbrug De Binding voorlopig van de baan",
+    "type": "Kennisgeving",
+    "datum": "2026-06-30",
+    "portefeuillehouder": "Slegers, G.",
+    "url": "https://zaanstad.bestuurlijkeinformatie.nl/Reports/Item/08124a55-0312-495d-bfe6-765a7692e71c",
+    "pdf_url": "https://zaanstad.bestuurlijkeinformatie.nl/Reports/Document/08124a55-0312-495d-bfe6-765a7692e71c?documentId=705841b1-91ba-4f9e-9910-d8c635d2b126",
+    "tekst": "gemeente Zaanstad  \nwethouder \nG. Slegers \n \nStadhuisplein 100 \n1506 MZ Zaandam \nPostbus 2000 \nKennisgeving \n1500 GA Zaandam \nAAN  \n \nGemeenteraad \n \nDATUM 29 juni 2026 Telefoon  14 075 \n \n  www.zaanstad.nl \n \nONDERWERP \nAfwijzing natuurvergunning busbrug De Binding \nvoorlopig van de baan \n \n \n   \nEr zijn constructieve gesprekken gevoerd met provincie en OD NHN \nOp 22 april 2026 hebben wij u geïnformeerd dat nieuwe strengere jurisprudentie over ‘stikstof’ \nwaarschijnlijk tot een afwijzing ging leiden ten aanzien van de aanvraag voor de benodigde \nnatuurvergunning voor de 24 uurs openstelling van busbrug De Binding. Inmiddels zijn zowel ambtelijk \nals bestuurlijk constructieve overleggen gevoerd met de provincie Noord-Holland en de \nomgevingsdienst Noord-Holland Noord (OD NHN) met als doel uiteindelijk alsnog te komen tot een \nvoldoende overtuigende onderbouwing van het zg. additionaliteitsvereiste. Dit vereiste houdt in dat \nvoldoende maatregelen worden genomen om de kwetsbare natuur, die al in slechte staat is, te \nherstellen en een verdere verslechtering ervan te voorkomen. Dit is nodig naast de ingezette (externe) \nsalderingsruimte ten behoeve van het project busbrug De Binding. \n \nDefinitieve afwijzing aanvraag natuurvergunning is voorlopig voorkomen \nMet hulp van de stadsadvocaat zijn gezamenlijk aanknopingspunten gevonden om de onderbouwing \nvan de additionaliteit steviger vorm te kunnen geven. Het blijft echter een complexe uitdaging zonder \ngarantie op succes. Belangrijk voor de juridische onderbouwing is dat ten aanzien van de \naangedragen maatregelen voor natuurherstel met voldoende zekerheid gesteld kan worden dat deze \ndaadwerkelijk uitgevoerd worden. De provincie bereidt een programmatische aanpak voor. Die \naanpak zet in op emissiereductie, natuurherstel, een juridische borging en uitwerking, alsmede \nmonitoring en bijsturing. Doel is natuurherstel en het weer mogelijk maken van vergunningverlening. \nDeze aanpak kan worden verstevigd door nieuw rijksbeleid met financiële middelen ad € 120 miljoen \nvoor Natuurherstel van de gebieden Laag Holland. De provincie zal in juni 2026 bij het rijk een zgn. \ngebiedsaanpak indienen waarbij de polder Westzaan een hoge prioriteit heeft. In de aanpak staan \naanvullende maatregelen en aanvullende benodigde (rijks)middelen. De inhoud van deze \ngebiedsaanpak maakt te zijner tijd deel uit van de provinciebrede programmatische aanpak. De \nprovincie streeft ernaar het uitvoeringsplan eind december 2026 vast te stellen.  \n \nVoor eind 2026 is er meer duidelijkheid of verlenen vergunning alsnog mogelijk is \nIn het najaar van 2026 bespreken de gemeente Zaanstad, de provincie Noord-Holland en de OD NHN \nalle dan beschikbare informatie om te bezien welke onderbouwing van de additionaliteit er dan \nmogelijk is en of de vaststelling van het uitvoeringsplan van de programmatische aanpak nog steeds \nhaalbaar is voor het einde van het jaar. Het college verwacht u eind 2026 nader te kunnen informeren \nover de voortgang en mogelijke uitkomst met betrekking tot de aanvraag van de natuurvergunning \nvoor de 24-uurs openstelling van busbrug De Binding. \n \nMet vriendelijke groet,  \nG. Slegers, wethouder",
+    "claims": [
+      {
+        "claim": "Deze aanpak kan worden verstevigd door nieuw rijksbeleid met financiële middelen ad € 120 miljoen",
+        "verificatie": "Controleer bedrag via gemeentebegroting, raadsstuk of jaarverslag",
+        "prioriteit": "HOOG",
+        "score": 75,
+        "bron": "code",
+        "kruischeck": null
+      },
+      {
+        "claim": "Voor eind 2026 is er meer duidelijkheid of verlenen vergunning alsnog mogelijk is",
+        "verificatie": "Controleer deadline via eerder raadsstuk, motie of collegebrief",
+        "prioriteit": "MIDDEL",
+        "score": 45,
+        "bron": "code",
+        "kruischeck": null
+      },
+      {
+        "claim": "Het college verwacht u eind 2026 nader te kunnen informeren",
+        "verificatie": "Controleer deadline via eerder raadsstuk, motie of collegebrief",
+        "prioriteit": "MIDDEL",
+        "score": 45,
+        "bron": "code",
+        "kruischeck": null
+      }
+    ],
+    "bijgewerkt": "2026-06-30"
+  },
+  {
     "id": "814a3403-3fd3-4eeb-897f-b419378c6336",
     "titel": "Kennisgeving wethouder Van der Laan: TAM-Omgevingsplan Saendenborch te Zaandam",
     "type": "Kennisgeving",
@@ -574,7 +611,7 @@
     "pdf_url": "https://zaanstad.bestuurlijkeinformatie.nl/Reports/Document/65255283-b947-44b7-87fc-52016c2e6571?documentId=1f5a0f17-927b-4a56-b94a-c7316170f154",
     "tekst": "gemeente Zaanstad \nwethouder \nH. van der Laan \nKennisgeving  \nStadhuisplein 100 \n1506 MZ Zaandam \nPostbus 2000 \n1500 GA Zaandam \nAAN Gemeenteraad  \n  \nDATUM 23 juni ’26 Telefoon  14 075 \n  www.zaanstad.nl \n ONDERWERP TAM-Omgevingsplan Saendenborch te Zaandam  \n \n   \nTer informatie van college aan de gemeenteraad \n \nHierbij ontvangt u \n \n• Ter kennisname \n \nBeste leden van de raad,  \n \nAfgelopen donderdagavond is in het Zaanstad Beraad het voorstel tot vaststellen van het TAM -\nOmgevingsplan 22c Saendenborch Zaandam besproken. Een vraag die daaruit naar voren kwam was \nwelke consequenties het uitstellen van het agenderen van het voorstel tot vaststelling voor de \nraadsvergadering van 1 juli as. zal hebben. Tevens zijn diverse technische vragen gesteld die \nbeantwoord zullen worden. De technische vragen zullen uiterlijk donderdag 25 juni as. via de \ngebruikelijke route worden beantwoord.  \n \nOver de agendering van het voorstel tot vaststelling geef ik graag de volgende nadere informatie. \nUitgezocht is of er juridische of financiële consequenties zijn bij uitstel van de agendering. Hiervan is \ngeen sprake. Aanvullend heb ik tijdens het Zaanstad Beraad aangegeven graag nog in gesprek te \ngaan met de insprekers van die avond. Eveneens wens ik nog in gesprek te gaan met de \ninitiatiefnemer. Hiervoor is aanvullend tijd nodig die niet meer voor het zomerreces gevonden kan \nworden. Daarom stel ik voor de besluitvorming over de vaststelling van het TAM-Omgevingsplan 22c \nSaendenborch uit te stellen tot na het zomerreces.  \n \nVerder heb ik van de initiatiefnemer vernomen dat hij voornemens is om de raad per brief aanvullend \nte informeren over het proces en de gesprekken met de inwoners. De verwachting is dat deze brief \nuiterlijk donderdag aan de raadsgriffie verstuurd wordt. \n \n \n \nMet vriendelijke groet, \n \nH. van der Laan, wethouder",
     "claims": [],
-    "bijgewerkt": "2026-06-29"
+    "bijgewerkt": "2026-06-30"
   },
   {
     "id": "fed8be52-3f5b-4833-b0c3-8fe468b655c1",
