@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       vanaf:
-        description: 'Ophalen vanaf datum (YYYY-MM-DD) — leeg = afgelopen 7 dagen'
+        description: 'Ophalen vanaf datum (YYYY-MM-DD) — leeg = standaard (1 juli 2026 voor besluiten, afgelopen 7 dagen voor de rest)'
         required: false
         default: ''
 jobs:
@@ -24,8 +24,8 @@ jobs:
         run: pip install pypdf --break-system-packages
       - name: Data-map aanmaken
         run: mkdir -p data
-      - name: Bekendmakingen scrapen
-        run: python scrape_rss.py
+      - name: Besluiten scrapen (camera's & woningsluitingen)
+        run: python scrape_besluiten.py
         env:
           SCRAPE_VANAF: ${{ github.event.inputs.vanaf }}
         continue-on-error: true
