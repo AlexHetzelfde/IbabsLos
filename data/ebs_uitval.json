@@ -33,6 +33,39 @@
     "eerst_gezien": "2026-07-01 19:45:27"
   },
   {
+    "id": "EBS:1069:1069_2026-07-01",
+    "journey_id": "EBS:1069:1069",
+    "datum": "2026-07-01",
+    "lijn": "69",
+    "lijnkleur": "#004899",
+    "categorie": "M-net",
+    "status": "cancelled",
+    "oorzaak_categorieen": [
+      "Personeel",
+      "Logistiek"
+    ],
+    "oorzaak_raw": "Cause: Personeel, Logistiek",
+    "terminus_alert": null,
+    "advies": null,
+    "haltes": [
+      {
+        "halte_id": "NL:S:37223860",
+        "halte_naam": "Gedempte Gracht",
+        "geplande_tijd": "23:27",
+        "vertraging_min": 0,
+        "status": "cancelled",
+        "vertrokken": false,
+        "realtime": false,
+        "platform": null,
+        "bestemming": "Zaandam Station"
+      }
+    ],
+    "eerste_tijd": "23:27",
+    "dagdeel": "avond",
+    "bijgewerkt": "2026-07-01 20:00:48",
+    "eerst_gezien": "2026-07-01 20:00:48"
+  },
+  {
     "id": "EBS:1067:1056_2026-07-01",
     "journey_id": "EBS:1067:1056",
     "datum": "2026-07-01",
