@@ -38,6 +38,7 @@ function getAllFracties() {
 let vergaderingen = [], moties = [], bekendmakingen = [], raadsvragen = [], collegebrieven = [], stemmingen = [], uitval = [];
 let huidigeClaims = [];
 let _chartFractie = null;
+let totaalTeller = {};
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
@@ -141,16 +142,25 @@ async function loadUitval() {
         ? '<div class="empty">Nog geen uitvaldata — draai eerst scrape_ebs.py.</div>'
         : `<div class="error-msg">Fout: ${e.message}</div>`;
   }
+  // 🆕 Teller voor totaal unieke ritten per dag laden
+  try {
+    const r = await fetch('./data/ebs_totaal_teller.json');
+    if (r.ok) totaalTeller = await r.json();
+  } catch (e) { /* bestand bestaat nog niet? dan blijft totaalTeller leeg */ }
 }
 
 // ── EBS UITVAL ────────────────────────────────────────────────────────────────
 function renderUitval() {
   const uitgevallen = uitval.filter(r => r.status === 'cancelled' || r.status === 'verkort');
-  const totaalRitten = uitval.length;
+    // ── STATS ─────────────────────────────────────────────────────────────────
+  const vandaag = new Date().toISOString().slice(0, 10);
+  let totaalRittenVandaag = uitval.length; // fallback als teller ontbreekt
+  if (totaalTeller && totaalTeller[vandaag]) {
+    totaalRittenVandaag = totaalTeller[vandaag].totaal;
+  }
 
-  // ── STATS ─────────────────────────────────────────────────────────────────
   document.getElementById('uvTotaal').textContent = uitgevallen.length;
-  const pct = totaalRitten ? Math.round(uitgevallen.length / totaalRitten * 100) : 0;
+  const pct = totaalRittenVandaag ? Math.round(uitgevallen.length / totaalRittenVandaag * 100) : 0;
   document.getElementById('uvPct').textContent = pct + '%';
   const datums = [...new Set(uitval.map(r => r.datum))].sort();
   document.getElementById('uvPeriode').textContent =
