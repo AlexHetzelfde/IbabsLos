@@ -1,9 +1,9 @@
 [
   {
-    "id": "EBS:1069:1069_2026-07-01",
-    "journey_id": "EBS:1069:1069",
+    "id": "EBS:1064:1072_2026-07-01",
+    "journey_id": "EBS:1064:1072",
     "datum": "2026-07-01",
-    "lijn": "69",
+    "lijn": "64",
     "lijnkleur": "#004899",
     "categorie": "M-net",
     "status": "cancelled",
@@ -16,21 +16,32 @@
     "advies": null,
     "haltes": [
       {
+        "halte_id": "NL:S:37220130",
+        "halte_naam": "Station Zaandam (Provincialeweg)",
+        "geplande_tijd": "23:55",
+        "vertraging_min": 0,
+        "status": "cancelled",
+        "vertrokken": false,
+        "realtime": false,
+        "platform": "Perron B",
+        "bestemming": "Zaandam"
+      },
+      {
         "halte_id": "NL:S:37223860",
         "halte_naam": "Gedempte Gracht",
-        "geplande_tijd": "23:27",
+        "geplande_tijd": "23:59",
         "vertraging_min": 0,
         "status": "cancelled",
         "vertrokken": false,
         "realtime": false,
         "platform": null,
-        "bestemming": "Zaandam Station"
+        "bestemming": "Zaandam"
       }
     ],
-    "eerste_tijd": "23:27",
+    "eerste_tijd": "23:55",
     "dagdeel": "avond",
-    "bijgewerkt": "2026-07-01 20:00:48",
-    "eerst_gezien": "2026-07-01 20:00:48"
+    "bijgewerkt": "2026-07-01 20:30:37",
+    "eerst_gezien": "2026-07-01 20:30:37"
   },
   {
     "id": "EBS:1069:1069_2026-07-01",
@@ -64,6 +75,39 @@
     "dagdeel": "avond",
     "bijgewerkt": "2026-07-01 20:15:24",
     "eerst_gezien": "2026-07-01 20:15:24"
+  },
+  {
+    "id": "EBS:1069:1069_2026-07-01",
+    "journey_id": "EBS:1069:1069",
+    "datum": "2026-07-01",
+    "lijn": "69",
+    "lijnkleur": "#004899",
+    "categorie": "M-net",
+    "status": "cancelled",
+    "oorzaak_categorieen": [
+      "Personeel",
+      "Logistiek"
+    ],
+    "oorzaak_raw": "Cause: Personeel, Logistiek",
+    "terminus_alert": null,
+    "advies": null,
+    "haltes": [
+      {
+        "halte_id": "NL:S:37223860",
+        "halte_naam": "Gedempte Gracht",
+        "geplande_tijd": "23:27",
+        "vertraging_min": 0,
+        "status": "cancelled",
+        "vertrokken": false,
+        "realtime": false,
+        "platform": null,
+        "bestemming": "Zaandam Station"
+      }
+    ],
+    "eerste_tijd": "23:27",
+    "dagdeel": "avond",
+    "bijgewerkt": "2026-07-01 20:30:37",
+    "eerst_gezien": "2026-07-01 20:30:37"
   },
   {
     "id": "EBS:1067:1056_2026-07-01",
