@@ -9,7 +9,9 @@ Haltes:
     Gedempte Gracht       NL:S:37223860
     Station Zaandam       NL:S:37220130   (alleen Provincialeweg)
 
-Resultaat: data/ebs_uitval.json
+Resultaat: data/ebs_uitval.json (alleen geannuleerde ritten)
+           data/ebs_totaal_teller.json (totaal unieke ritten per dag)
+
 Elke rit is een uniek record op (journey_id + datum). Eén fysieke rit die
 op meerdere van de drie haltes stopt, wordt samengevoegd tot één record
 met een lijst van haltebezoeken (elk met eigen tijd/status).
@@ -46,6 +48,7 @@ except ImportError:
 # ── CONFIGURATIE ──────────────────────────────────────────────────────────────
 BASE_URL = "https://drgl.nl"
 OUTPUT   = "data/ebs_uitval.json"
+TELLER_BESTAND = "data/ebs_totaal_teller.json"
 
 HALTES = [
     {"id": "NL:S:37223552", "naam": "De Vlinder"},
@@ -287,9 +290,24 @@ def load_existing():
     return {r["id"]: r for r in data}
 
 
+# ── TELLER VOOR TOTAAL RITTEN ─────────────────────────────────────────────────
+def laad_teller():
+    if not os.path.exists(TELLER_BESTAND):
+        return {}
+    with open(TELLER_BESTAND, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def bewaar_teller(teller):
+    os.makedirs("data", exist_ok=True)
+    with open(TELLER_BESTAND, "w", encoding="utf-8") as f:
+        json.dump(teller, f, ensure_ascii=False, indent=2)
+
+
 # ── HOOFDPROGRAMMA ────────────────────────────────────────────────────────────
 def main():
     nu = datetime.now()
+    vandaag = nu.strftime("%Y-%m-%d")
     print(f"EBS-uitval scrape gestart om {nu.strftime('%Y-%m-%d %H:%M:%S')}")
 
     jar    = http.cookiejar.CookieJar()
@@ -315,19 +333,33 @@ def main():
     # Combineer alle vertrekken tot unieke ritten (ongeacht status)
     nieuwe_ritten = combineer_ritten(alle_vertrekken)
 
-    # Bestaande data inladen en direct filteren: alleen cancelled ritten bewaren
+    # ── TELLER BIJWERKEN ──────────────────────────────────
+    teller = laad_teller()
+    if vandaag not in teller:
+        teller[vandaag] = {"totaal": 0, "journeys": []}
+
+    # Alle journey_id's van vandaag (alleen unieke, dat zijn ze al in 'nieuwe_ritten')
+    ids_vandaag = {rit["journey_id"] for rit in nieuwe_ritten.values() if rit["datum"] == vandaag}
+    bestaande_ids = set(teller[vandaag]["journeys"])
+    nieuwe_ids = ids_vandaag - bestaande_ids
+
+    if nieuwe_ids:
+        teller[vandaag]["totaal"] += len(nieuwe_ids)
+        teller[vandaag]["journeys"].extend(nieuwe_ids)
+        bewaar_teller(teller)
+        print(f"  Teller: +{len(nieuwe_ids)} unieke ritten vandaag → totaal {teller[vandaag]['totaal']}")
+
+    # ── ALLEEN CANCELLED OPSLAAN ──────────────────────────
     bestaand = load_existing()
     bestaand = {rid: r for rid, r in bestaand.items() if r.get("status") == "cancelled"}
 
     nieuw_count = 0
     update_count = 0
     for rid, rit in nieuwe_ritten.items():
-        # Alleen geannuleerde ritten opslaan
         if rit["status"] != "cancelled":
             continue
         rit["bijgewerkt"] = nu.strftime("%Y-%m-%d %H:%M:%S")
         if rid in bestaand:
-            # Behoud eerst-geziene tijdstip
             rit["eerst_gezien"] = bestaand[rid].get("eerst_gezien", rit["bijgewerkt"])
             update_count += 1
         else:
@@ -335,7 +367,6 @@ def main():
             nieuw_count += 1
         bestaand[rid] = rit
 
-    # Alleen cancelled ritten blijven over, gesorteerd op datum/tijd
     resultaat = sorted(
         bestaand.values(),
         key=lambda r: (r.get("datum") or "", r.get("eerste_tijd") or ""),
@@ -346,7 +377,7 @@ def main():
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(resultaat, f, ensure_ascii=False, indent=2)
 
-    cancelled_vandaag = [r for r in resultaat if r["datum"] == nu.strftime("%Y-%m-%d")]
+    cancelled_vandaag = [r for r in resultaat if r["datum"] == vandaag]
     print(f"\n✓ Weggeschreven naar {OUTPUT}")
     print(f"  {nieuw_count} nieuwe geannuleerde ritten · {update_count} bijgewerkt")
     print(f"  {len(resultaat)} geannuleerde ritten totaal in JSON")
