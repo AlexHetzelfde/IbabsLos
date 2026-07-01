@@ -312,15 +312,22 @@ def main():
         print("Geen vertrekken opgehaald — stoppen zonder wijzigingen.")
         return
 
+    # Combineer alle vertrekken tot unieke ritten (ongeacht status)
     nieuwe_ritten = combineer_ritten(alle_vertrekken)
-    bestaand      = load_existing()
+
+    # Bestaande data inladen en direct filteren: alleen cancelled ritten bewaren
+    bestaand = load_existing()
+    bestaand = {rid: r for rid, r in bestaand.items() if r.get("status") == "cancelled"}
 
     nieuw_count = 0
     update_count = 0
     for rid, rit in nieuwe_ritten.items():
+        # Alleen geannuleerde ritten opslaan
+        if rit["status"] != "cancelled":
+            continue
         rit["bijgewerkt"] = nu.strftime("%Y-%m-%d %H:%M:%S")
         if rid in bestaand:
-            # Behoud eerst-geziene tijdstip, neem verder de nieuwste status over
+            # Behoud eerst-geziene tijdstip
             rit["eerst_gezien"] = bestaand[rid].get("eerst_gezien", rit["bijgewerkt"])
             update_count += 1
         else:
@@ -328,8 +335,7 @@ def main():
             nieuw_count += 1
         bestaand[rid] = rit
 
-    # Alleen vandaag + gisteren bewaren we "live", maar we gooien niets weg
-    # qua geschiedenis — alles blijft in het bestand voor trendanalyse.
+    # Alleen cancelled ritten blijven over, gesorteerd op datum/tijd
     resultaat = sorted(
         bestaand.values(),
         key=lambda r: (r.get("datum") or "", r.get("eerste_tijd") or ""),
@@ -340,14 +346,11 @@ def main():
     with open(OUTPUT, "w", encoding="utf-8") as f:
         json.dump(resultaat, f, ensure_ascii=False, indent=2)
 
-    totaal_vandaag = [r for r in resultaat if r["datum"] == nu.strftime("%Y-%m-%d")]
-    cancelled_vandaag = [r for r in totaal_vandaag if r["status"] == "cancelled"]
-    verkort_vandaag   = [r for r in totaal_vandaag if r["status"] == "verkort"]
-
+    cancelled_vandaag = [r for r in resultaat if r["datum"] == nu.strftime("%Y-%m-%d")]
     print(f"\n✓ Weggeschreven naar {OUTPUT}")
-    print(f"  {nieuw_count} nieuwe ritten · {update_count} bijgewerkte ritten")
-    print(f"  {len(resultaat)} ritten totaal in JSON")
-    print(f"  Vandaag: {len(totaal_vandaag)} ritten · {len(cancelled_vandaag)} cancelled · {len(verkort_vandaag)} verkort")
+    print(f"  {nieuw_count} nieuwe geannuleerde ritten · {update_count} bijgewerkt")
+    print(f"  {len(resultaat)} geannuleerde ritten totaal in JSON")
+    print(f"  Vandaag: {len(cancelled_vandaag)} cancelled")
 
 
 if __name__ == "__main__":
