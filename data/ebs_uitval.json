@@ -1,36 +1,36 @@
 [
   {
-    "id": "EBS:1391:1052_2026-07-02",
-    "journey_id": "EBS:1391:1052",
+    "id": "EBS:1067:1028_2026-07-02",
+    "journey_id": "EBS:1067:1028",
     "datum": "2026-07-02",
-    "lijn": "391",
-    "lijnkleur": "#e1251b",
-    "categorie": "R-net",
+    "lijn": "67",
+    "lijnkleur": "#004899",
+    "categorie": "M-net",
     "status": "cancelled",
     "oorzaak_categorieen": [
-      "Personeel",
+      "Materieel",
       "Logistiek"
     ],
-    "oorzaak_raw": "Cause: Personeel, Logistiek",
+    "oorzaak_raw": "Cause: Materieel, Logistiek",
     "terminus_alert": null,
     "advies": null,
     "haltes": [
       {
-        "halte_id": "NL:S:37223552",
-        "halte_naam": "De Vlinder",
-        "geplande_tijd": "11:55",
+        "halte_id": "NL:S:37220130",
+        "halte_naam": "Station Zaandam (Provincialeweg)",
+        "geplande_tijd": "13:17",
         "vertraging_min": 0,
         "status": "cancelled",
         "vertrokken": false,
         "realtime": false,
-        "platform": "Perron D",
-        "bestemming": "Zaanse Schans"
+        "platform": "Perron A",
+        "bestemming": "Purmerend via Wormerveer"
       }
     ],
-    "eerste_tijd": "11:55",
+    "eerste_tijd": "13:17",
     "dagdeel": "dal",
-    "bijgewerkt": "2026-07-02 09:30:35",
-    "eerst_gezien": "2026-07-02 09:30:35"
+    "bijgewerkt": "2026-07-02 10:00:46",
+    "eerst_gezien": "2026-07-02 10:00:46"
   },
   {
     "id": "EBS:1391:1052_2026-07-02",
