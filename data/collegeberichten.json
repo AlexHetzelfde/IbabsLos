@@ -29,6 +29,27 @@
     "bijgewerkt": "2026-11-06"
   },
   {
+    "id": "cf2f7289-e822-4187-b459-9069b1dcb9ad",
+    "titel": "Kennisgeving wethouder Groenewoud: Aanvraag windturbines Westelijk Havengebied",
+    "type": "Kennisgeving",
+    "datum": "2026-11-06",
+    "portefeuillehouder": "Groenewoud, S.",
+    "url": "https://zaanstad.bestuurlijkeinformatie.nl/Reports/Item/cf2f7289-e822-4187-b459-9069b1dcb9ad",
+    "pdf_url": "https://zaanstad.bestuurlijkeinformatie.nl/Reports/Document/cf2f7289-e822-4187-b459-9069b1dcb9ad?documentId=e44deb13-3764-4b20-b7a9-900727754fcd",
+    "tekst": "gemeente Zaanstad \nwethouder \nS. Groenewoud \nKennisgeving  \nStadhuisplein 100 \n1506 MZ Zaandam \nPostbus 2000 \n1500 GA Zaandam \nAAN Gemeenteraad  \n  \nDATUM 6 november 2026 Telefoon  14 075 \n  www.zaanstad.nl \n \nONDERWERP Aanvraag windturbines Westelijk Havengebied  \n \n   \nTer informatie van college aan de gemeenteraad \n \nHierbij ontvangt u \n \n• Ter kennisname \n \nGeachte leden van de gemeenteraad, \n \nZaanstad is door provincie Noord-Holland en Port of Amsterdam (PoA) geïnformeerd dat PoA een \naanvraag heeft gedaan voor het ontwikkelen van 8 windturbines in het Westelijk Havengebied. De \nontwikkeling van deze windturbines is onderdeel van het zoekgebied Haven 1A uit het Programma \nWind Amsterdam. De aanvraag is onderdeel van de projectbesluitprocedure waarover de raad eerder \nis geïnformeerd in een kennisgeving op 3 november 2025. \n \nEr is nog niet besloten of er extra windturbines in het Westelijk Havengebied van Amsterdam komen. \nWanneer de provincie een besluit neemt over de aanvraag zal het mogelijk zijn om te reageren via \neen zienswijze. Dit zal naar verwachting halverwege 2027 zijn.  \n \nOmgevingsdienst Noordzeekanaalgebied zal de aanvraag beoordelen. Meer informatie over de \naanvraag, het proces en locatie/zoekgebied kunt u lezen op de website van de provincie: \nVergunningaanvragen voor 8 windturbines in havengebied Amsterdam. \n \nDe gemeente heeft regelmatig contact met de provincie, gemeente Amsterdam en PoA over de \nontwikkeling van windenergie in het Westelijk Havengebied. Wanneer er verdere stappen worden \ngezet in dit proces zal het college de raad daarover informeren. \n \n \nMet vriendelijke groet, \n \nS. Groenewoud, wethouder",
+    "claims": [
+      {
+        "claim": "Wanneer de provincie een besluit neemt over de aanvraag zal het mogelijk zijn om te reageren via",
+        "verificatie": "Controleer wetsartikel of beleidsdocument via overheid.nl of gemeentearchief",
+        "prioriteit": "LAAG",
+        "score": 20,
+        "bron": "code",
+        "kruischeck": null
+      }
+    ],
+    "bijgewerkt": "2026-11-06"
+  },
+  {
     "id": "d9ebbde0-01da-4bd9-8b09-eb79308e782f",
     "titel": "Kennisgeving burgemeester Hamming: incident Jaspersstraat",
     "type": "Kennisgeving",
