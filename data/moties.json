@@ -309,10 +309,10 @@
     ],
     "datum": "2026-11-26",
     "agendapunt": "Raadsvergadering 26-11-2026 7.2. Participatieverordening gemeente Zaanstad 2027",
-    "status": "",
-    "voor_pct": 100,
-    "tegen_pct": 0,
-    "fracties_voor": "CDA  (1), D66 (3), Democratisch Zaanstad (2), DENK (2), Forum voor Democratie (3), Lokaal Zaans (8), Partij voor de Dieren (1), POV (3), PRO (6), PVV (3), ROSA (2), SP (1), VVD (2)",
+    "status": null,
+    "voor_pct": null,
+    "tegen_pct": null,
+    "fracties_voor": null,
     "fracties_tegen": null
   },
   {
